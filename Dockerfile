@@ -1,7 +1,9 @@
-# Sử dụng PHP CLI (không FPM) vì chạy artisan serve
+# ============================================================
+# Dockerfile - Backend Laravel (PHP 8.4 CLI)
+# ============================================================
 FROM php:8.4-cli
 
-# Cài đặt các thư viện hệ thống cần thiết
+# Cài thư viện hệ thống
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg62-turbo-dev \
@@ -19,23 +21,39 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Composer
+# Cài Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Thiết lập thư mục làm việc
 WORKDIR /var/www
 
-# Copy toàn bộ source code
+# Copy source code
 COPY . /var/www
 
-RUN mkdir -p /var/www/storage /var/www/bootstrap/cache \
-    && chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
+# Tạo .env từ .env.example nếu chưa có
+RUN cp -n .env.example .env || true
+
+# Cài dependencies (--no-scripts để tránh lỗi khi chưa có DB)
+RUN composer install --no-interaction --no-plugins --no-scripts --prefer-dist
+
+# Tạo APP_KEY nếu chưa có
+RUN php artisan key:generate --ansi || true
+
+# Phân quyền storage và cache
+RUN mkdir -p /var/www/storage/logs \
+             /var/www/storage/framework/cache \
+             /var/www/storage/framework/sessions \
+             /var/www/storage/framework/views \
+             /var/www/bootstrap/cache \
+    && chown -R www-data:www-data /var/www \
     && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
-# Chạy container bằng user www-data (bảo mật hơn root)
+
+# Chạy bằng www-data
+# Copy entrypoint và cấp quyền thực thi (phải làm khi còn root)
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 USER www-data
 
-# Mở port cho artisan serve
 EXPOSE 8000
 
-# Chạy Laravel built-in server
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+ENTRYPOINT ["/entrypoint.sh"]
