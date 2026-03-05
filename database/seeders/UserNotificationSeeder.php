@@ -1,0 +1,52 @@
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+
+class UserNotificationSeeder extends Seeder
+{
+    public function run(): void
+    {
+        // role_id: 3=lecturer, 4=student
+        $rows = [
+            // Thông báo 1 - gửi tất cả sinh viên
+            ['notification_id' => 1, 'user_id' => 1,  'role_id' => 4, 'is_read' => 1],
+            ['notification_id' => 1, 'user_id' => 2,  'role_id' => 4, 'is_read' => 1],
+            ['notification_id' => 1, 'user_id' => 3,  'role_id' => 4, 'is_read' => 0],
+            ['notification_id' => 1, 'user_id' => 4,  'role_id' => 4, 'is_read' => 1],
+            ['notification_id' => 1, 'user_id' => 5,  'role_id' => 4, 'is_read' => 1],
+            ['notification_id' => 1, 'user_id' => 6,  'role_id' => 4, 'is_read' => 0],
+            ['notification_id' => 1, 'user_id' => 7,  'role_id' => 4, 'is_read' => 0],
+            ['notification_id' => 1, 'user_id' => 8,  'role_id' => 4, 'is_read' => 1],
+            ['notification_id' => 1, 'user_id' => 9,  'role_id' => 4, 'is_read' => 0],
+            ['notification_id' => 1, 'user_id' => 10, 'role_id' => 4, 'is_read' => 0],
+            // Thông báo 2 - gửi sinh viên thực tập
+            ['notification_id' => 2, 'user_id' => 4,  'role_id' => 4, 'is_read' => 1],
+            ['notification_id' => 2, 'user_id' => 5,  'role_id' => 4, 'is_read' => 1],
+            ['notification_id' => 2, 'user_id' => 8,  'role_id' => 4, 'is_read' => 0],
+            ['notification_id' => 2, 'user_id' => 9,  'role_id' => 4, 'is_read' => 1],
+            // Thông báo 3 - nhắc sinh viên làm đồ án
+            ['notification_id' => 3, 'user_id' => 1,  'role_id' => 4, 'is_read' => 0],
+            ['notification_id' => 3, 'user_id' => 2,  'role_id' => 4, 'is_read' => 1],
+            ['notification_id' => 3, 'user_id' => 3,  'role_id' => 4, 'is_read' => 0],
+            // Thông báo 4 - gửi giảng viên
+            ['notification_id' => 4, 'user_id' => 1,  'role_id' => 3, 'is_read' => 1],
+            ['notification_id' => 4, 'user_id' => 2,  'role_id' => 3, 'is_read' => 1],
+            ['notification_id' => 4, 'user_id' => 3,  'role_id' => 3, 'is_read' => 0],
+            ['notification_id' => 4, 'user_id' => 4,  'role_id' => 3, 'is_read' => 1],
+            // Thông báo 5 - tất cả sinh viên
+            ['notification_id' => 5, 'user_id' => 1,  'role_id' => 4, 'is_read' => 0],
+            ['notification_id' => 5, 'user_id' => 2,  'role_id' => 4, 'is_read' => 0],
+            ['notification_id' => 5, 'user_id' => 3,  'role_id' => 4, 'is_read' => 0],
+        ];
+
+        foreach ($rows as $row) {
+            DB::table('user_notifications')->insertOrIgnore(array_merge($row, [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]));
+        }
+    }
+}
