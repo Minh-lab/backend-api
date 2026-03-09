@@ -9,14 +9,44 @@ class LoginSeeder extends Seeder
 {
     public function run(): void
     {
-        // role_id: 1=admin, 2=faculty_staff, 3=lecturer, 4=student, 5=company
+        // Lấy role_id động theo role_name → tránh hardcode
+        $roles = DB::table('roles')->pluck('role_id', 'role_name');
+
+        // Kiểm tra đủ roles chưa
+        $required = ['admin', 'faculty-staff', 'lecturer', 'student', 'company'];
+        foreach ($required as $r) {
+            if (!isset($roles[$r])) {
+                $this->command->error("Thiếu role: {$r} — chạy RoleSeeder trước!");
+                return;
+            }
+        }
+
         $rows = [];
 
-        foreach ([1, 2] as $id)          $rows[] = ['user_id' => $id, 'role_id' => 1]; // admins
-        foreach ([1, 2, 3] as $id)       $rows[] = ['user_id' => $id, 'role_id' => 2]; // faculty_staffs
-        foreach (range(1, 6) as $id)     $rows[] = ['user_id' => $id, 'role_id' => 3]; // lecturers
-        foreach (range(1, 10) as $id)    $rows[] = ['user_id' => $id, 'role_id' => 4]; // students
-        foreach (range(1, 5) as $id)     $rows[] = ['user_id' => $id, 'role_id' => 5]; // companies
+        // Admins
+        foreach ([1, 2] as $id) {
+            $rows[] = ['user_id' => $id, 'role_id' => $roles['admin']];
+        }
+
+        // Faculty staffs (VPK)
+        foreach ([1, 2, 3] as $id) {
+            $rows[] = ['user_id' => $id, 'role_id' => $roles['faculty-staff']];
+        }
+
+        // Lecturers
+        foreach (range(1, 6) as $id) {
+            $rows[] = ['user_id' => $id, 'role_id' => $roles['lecturer']];
+        }
+
+        // Students
+        foreach (range(1, 10) as $id) {
+            $rows[] = ['user_id' => $id, 'role_id' => $roles['student']];
+        }
+
+        // Companies
+        foreach (range(1, 5) as $id) {
+            $rows[] = ['user_id' => $id, 'role_id' => $roles['company']];
+        }
 
         foreach ($rows as $row) {
             DB::table('logins')->insertOrIgnore(array_merge($row, [
@@ -26,5 +56,7 @@ class LoginSeeder extends Seeder
                 'updated_at'     => now(),
             ]));
         }
+
+        $this->command->info('LoginSeeder hoàn thành: ' . count($rows) . ' records.');
     }
 }

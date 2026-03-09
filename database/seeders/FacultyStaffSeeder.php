@@ -17,6 +17,8 @@ class FacultyStaffSeeder extends Seeder
                 'password'     => Hash::make('Staff@123'),
                 'email'        => 'vanphong01@tlu.edu.vn',
                 'full_name'    => 'Nguyễn Thị Hương',
+                'gender'       => 'Nữ',
+                'dob'          => '1990-03-08',
                 'phone_number' => '0912345601',
             ],
             [
@@ -25,6 +27,8 @@ class FacultyStaffSeeder extends Seeder
                 'password'     => Hash::make('Staff@123'),
                 'email'        => 'vanphong02@tlu.edu.vn',
                 'full_name'    => 'Trần Thị Mai',
+                'gender'       => 'Nữ',
+                'dob'          => '1992-07-20',
                 'phone_number' => '0912345602',
             ],
             [
@@ -33,6 +37,8 @@ class FacultyStaffSeeder extends Seeder
                 'password'     => Hash::make('Staff@123'),
                 'email'        => 'vanphong03@tlu.edu.vn',
                 'full_name'    => 'Lê Thị Lan',
+                'gender'       => 'Nữ',
+                'dob'          => '1995-11-30',
                 'phone_number' => '0912345603',
             ],
         ];

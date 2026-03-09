@@ -17,6 +17,8 @@ class AdminSeeder extends Seeder
                 'password'  => Hash::make('Admin@123'),
                 'email'     => 'admin@tlu.edu.vn',
                 'full_name' => 'Quản trị viên hệ thống',
+                'gender'    => 'Nam',
+                'dob'       => '1980-01-01',
             ],
             [
                 'usercode'  => 'AD002',
@@ -24,6 +26,8 @@ class AdminSeeder extends Seeder
                 'password'  => Hash::make('Admin@123'),
                 'email'     => 'admin2@tlu.edu.vn',
                 'full_name' => 'Quản trị viên 2',
+                'gender'    => 'Nữ',
+                'dob'       => '1985-05-15',
             ],
         ];
 

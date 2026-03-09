@@ -20,6 +20,12 @@ use Illuminate\Support\Str;
 use App\Http\Requests\Auth\UpdateExpertiseRequest;
 use App\Models\Expertise;
 use App\Models\LecturerExpertise;
+use App\Http\Requests\Auth\LeaveRequest;
+use App\Models\LecturerRequest;
+use App\Models\Notification;
+use App\Models\UserNotification;
+use App\Models\FacultyStaff;
+use Illuminate\Support\Facades\Storage;
 class AuthController extends Controller
 {
     private const MAX_FAILED_ATTEMPTS = 6;
@@ -28,9 +34,9 @@ class AuthController extends Controller
     private const ROLE_MODELS = [
         'student' => \App\Models\Student::class,
         'lecturer' => \App\Models\Lecturer::class,
-        'vpk' => \App\Models\FacultyStaff::class,
+        'faculty_staff' => \App\Models\FacultyStaff::class,
         'admin' => \App\Models\Admin::class,
-        'enterprise' => \App\Models\Company::class,
+        'company' => \App\Models\Company::class,
     ];
 
     // UC1: Login
@@ -561,6 +567,163 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'Cập nhật chuyên môn thành công.',
             'data' => new UserResource($lecturer, 'lecturer'),
+        ], 200);
+    }
+    // UC7 - Yêu cầu nghỉ phép dài hạn
+    public function createLeaveRequest(LeaveRequest $request): JsonResponse
+    {
+        // Chỉ giảng viên mới được dùng
+        $role = $request->user()->currentAccessToken()->abilities[0] ?? null;
+        if ($role !== 'lecturer') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không có quyền thực hiện thao tác này.',
+            ], 403);
+        }
+
+        $lecturer = $request->user();
+        $lecturerId = $lecturer->lecturer_id;
+
+        // Upload file đơn nghỉ phép
+        $file = $request->file('file');
+        $filePath = $file->store("leave_requests/{$lecturerId}", 'public');
+
+        // Lưu vào bảng lecturer_requests
+        $leaveRequest = LecturerRequest::create([
+            'lecturer_id' => $lecturerId,
+            'type' => 'LEAVE_REQ',
+            'status' => 'PENDING',
+            'title' => $request->input('title'),
+            'description' => $request->input('description'),
+            'file_path' => $filePath,
+            'start_date' => $request->input('start_date'),
+            'end_date' => $request->input('end_date'),
+        ]);
+
+        // Thông báo cho tất cả facultyStaff
+        $this->notifyFacultyStaff($lecturer->full_name, $leaveRequest->request_id);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Gửi yêu cầu thành công.',
+            'data' => [
+                'request_id' => $leaveRequest->request_id,
+                'title' => $leaveRequest->title,
+                'status' => $leaveRequest->status,
+                'start_date' => $leaveRequest->start_date,
+                'end_date' => $leaveRequest->end_date,
+                'file_url' => Storage::url($filePath),
+            ],
+        ], 201);
+    }
+
+    // Helper: Gửi thông báo cho facultyStaff
+    private function notifyFacultyStaff(string $lecturerName, int $requestId): void
+    {
+        // Tạo notification
+        $notification = Notification::create([
+            'title' => 'Yêu cầu nghỉ phép mới',
+            'content' => "Giảng viên {$lecturerName} đã gửi yêu cầu nghỉ phép dài hạn. Mã yêu cầu: #{$requestId}",
+        ]);
+
+        // Gửi cho tất cả FacultyStaff
+        $facultyStaffList = FacultyStaff::all();
+
+        $role = Role::where('role_name', 'facultyStaff')->first();
+        $now = now();
+
+        $userNotifications = $facultyStaffList->map(fn($facultyStaff) => [
+            'notification_id' => $notification->notification_id,
+            'user_id' => $facultyStaff->faculty_staff_id,
+            'is_read' => 0,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ])->toArray();
+
+        UserNotification::insert($userNotifications);
+    }
+    // UC8 - Lấy danh sách thông báo
+    public function getNotifications(Request $request): JsonResponse
+    {
+        $role = $request->user()->currentAccessToken()->abilities[0] ?? null;
+
+        // Chỉ sinh viên và giảng viên
+        if (!in_array($role, ['student', 'lecturer'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không có quyền thực hiện thao tác này.',
+            ], 403);
+        }
+
+        $user = $request->user();
+        $primaryKey = $user->getKeyName(); // student_id hoặc lecturer_id
+        $userId = $user->$primaryKey;
+
+        // Lấy danh sách thông báo của user
+        // Sắp xếp theo thời gian giảm (mới nhất trên cùng)
+        $notifications = UserNotification::with('notification')
+            ->where('user_id', $userId)
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(fn($un) => [
+                'id' => $un->notification->notification_id,
+                'title' => $un->notification->title,
+                'content' => $un->notification->content,
+                'is_read' => (bool) $un->is_read,
+                'created_at' => $un->notification->created_at,
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $notifications,
+            'total' => $notifications->count(),
+            'unread_count' => $notifications->where('is_read', false)->count(),
+        ], 200);
+    }
+
+    // UC8 - Đánh dấu đã xem (gọi khi user bấm vào thông báo)
+    public function markAsRead(Request $request, int $id): JsonResponse
+    {
+        $role = $request->user()->currentAccessToken()->abilities[0] ?? null;
+
+        if (!in_array($role, ['student', 'lecturer'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không có quyền thực hiện thao tác này.',
+            ], 403);
+        }
+
+        $user = $request->user();
+        $primaryKey = $user->getKeyName();
+        $userId = $user->$primaryKey;
+
+        // Tìm user_notification
+        $userNotification = UserNotification::where('notification_id', $id)
+            ->where('user_id', $userId)
+            ->first();
+
+        if (!$userNotification) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Thông báo không tồn tại.',
+            ], 404);
+        }
+
+        // Cập nhật trạng thái đã xem (dù chưa xem hay rồi)
+        $userNotification->update(['is_read' => 1]);
+
+        // Trả về nội dung thông báo để hiển thị dialog
+        $notification = $userNotification->notification;
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $notification->notification_id,
+                'title' => $notification->title,
+                'content' => $notification->content,
+                'is_read' => true,
+                'created_at' => $notification->created_at,
+            ],
         ], 200);
     }
 }

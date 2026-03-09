@@ -21,6 +21,8 @@ class FacultyStaff extends Authenticatable
         'password',
         'email',
         'full_name',
+        'gender',
+        'dob',
         'phone_number',
     ];
 
