@@ -11,7 +11,7 @@ class RoleSeeder extends Seeder
     {
         $rows = [
             ['role_name' => 'admin'],
-            ['role_name' => 'faculty-staff'],       
+            ['role_name' => 'faculty_staff'],       
             ['role_name' => 'lecturer'],
             ['role_name' => 'student'],
             ['role_name' => 'company'], 

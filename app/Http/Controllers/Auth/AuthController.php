@@ -24,16 +24,16 @@ class AuthController extends Controller
     private const LOCK_DURATION_MINUTES = 30;
 
     private const ROLE_MODELS = [
-        'student'       => \App\Models\Student::class,
-        'lecturer'      => \App\Models\Lecturer::class,
+        'student' => \App\Models\Student::class,
+        'lecturer' => \App\Models\Lecturer::class,
         'faculty_staff' => \App\Models\FacultyStaff::class,
-        'admin'         => \App\Models\Admin::class,
-        'company'       => \App\Models\Company::class,
+        'admin' => \App\Models\Admin::class,
+        'company' => \App\Models\Company::class,
     ];
 
-    // ════════════════════════════════════════
+
     // Helper: tìm user theo email
-    // ════════════════════════════════════════
+
     private function findUserByEmail(string $email): array
     {
         foreach (self::ROLE_MODELS as $roleName => $modelClass) {
@@ -45,12 +45,12 @@ class AuthController extends Controller
         return [null, null];
     }
 
-    // ════════════════════════════════════════
+
     // UC1: Login
-    // ════════════════════════════════════════
+
     public function login(LoginRequest $request): JsonResponse
     {
-        $email    = $request->input('email');
+        $email = $request->input('email');
         $password = $request->input('password');
 
         [$found, $foundRole] = $this->findUserByEmail($email);
@@ -64,9 +64,9 @@ class AuthController extends Controller
         }
 
         // 2. Lấy role + login record
-        $role       = Role::where('role_name', $foundRole)->first();
+        $role = Role::where('role_name', $foundRole)->first();
         $primaryKey = $found->getKeyName();
-        $login      = Login::where('user_id', $found->$primaryKey)
+        $login = Login::where('user_id', $found->$primaryKey)
             ->where('role_id', $role->role_id)
             ->first();
 
@@ -83,16 +83,16 @@ class AuthController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Tài khoản đã bị khoá.',
-                'type'    => 'toast',
+                'type' => 'toast',
             ], 403);
         }
 
         // 5. Đang bị khóa tạm thời
         if ($login->lockout_until && now()->lt($login->lockout_until)) {
             return response()->json([
-                'success'      => false,
-                'message'      => 'Tài khoản bị khoá tạm thời, thử lại sau.',
-                'type'         => 'toast',
+                'success' => false,
+                'message' => 'Tài khoản bị khoá tạm thời, thử lại sau.',
+                'type' => 'toast',
                 'locked_until' => $login->lockout_until,
             ], 423);
         }
@@ -104,7 +104,7 @@ class AuthController extends Controller
             if ($attempts >= self::MAX_FAILED_ATTEMPTS) {
                 $login->update([
                     'login_attempts' => 0,
-                    'lockout_until'  => now()->addMinutes(self::LOCK_DURATION_MINUTES),
+                    'lockout_until' => now()->addMinutes(self::LOCK_DURATION_MINUTES),
                 ]);
                 return response()->json([
                     'success' => false,
@@ -115,8 +115,8 @@ class AuthController extends Controller
             $login->update(['login_attempts' => $attempts]);
 
             return response()->json([
-                'success'       => false,
-                'message'       => 'Mật khẩu không chính xác.',
+                'success' => false,
+                'message' => 'Mật khẩu không chính xác.',
                 'attempts_left' => self::MAX_FAILED_ATTEMPTS - $attempts,
             ], 401);
         }
@@ -124,7 +124,7 @@ class AuthController extends Controller
         // 7. Thành công → reset attempts + tạo token
         $login->update([
             'login_attempts' => 0,
-            'lockout_until'  => null,
+            'lockout_until' => null,
         ]);
 
         $token = $found->createToken('auth_token', [$foundRole])->plainTextToken;
@@ -139,15 +139,15 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Đăng nhập thành công.',
-            'data'    => [
+            'data' => [
                 'token' => $token,
-                'role'  => $foundRole,
-                'user'  => new UserResource($found, $foundRole),
+                'role' => $foundRole,
+                'user' => new UserResource($found, $foundRole),
             ],
         ], 200);
     }
 
- 
+
     // UC2: Logout
 
     public function logout(Request $request): JsonResponse
@@ -160,9 +160,9 @@ class AuthController extends Controller
         ], 200);
     }
 
- 
+
     // UC3 - Bước 1: Gửi OTP
-  
+
     public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
     {
         $email = $request->input('email');
@@ -177,7 +177,7 @@ class AuthController extends Controller
             ], 200);
         }
 
-        $role       = Role::where('role_name', $foundRole)->first();
+        $role = Role::where('role_name', $foundRole)->first();
         $primaryKey = $found->getKeyName();
 
         // Kiểm tra cooldown (sai OTP quá 3 lần, chưa hết thời gian chờ)
@@ -192,8 +192,8 @@ class AuthController extends Controller
         if ($recentReset) {
             $secondsLeft = now()->diffInSeconds($recentReset->expired_at, false);
             return response()->json([
-                'success'      => false,
-                'message'      => 'Vui lòng chờ trước khi yêu cầu mã OTP mới.',
+                'success' => false,
+                'message' => 'Vui lòng chờ trước khi yêu cầu mã OTP mới.',
                 'seconds_left' => $secondsLeft,
             ], 429);
         }
@@ -206,12 +206,12 @@ class AuthController extends Controller
             ->delete();
 
         PasswordReset::create([
-            'user_id'    => $found->$primaryKey,
-            'role_id'    => $role->role_id,
-            'otp'        => $otp,
+            'user_id' => $found->$primaryKey,
+            'role_id' => $role->role_id,
+            'otp' => $otp,
             'expired_at' => now()->addSeconds(60),
-            'is_used'    => 0,
-            'attempts'   => 0,
+            'is_used' => 0,
+            'attempts' => 0,
         ]);
 
         // Gửi email
@@ -231,7 +231,7 @@ class AuthController extends Controller
     public function verifyOtp(VerifyOtpRequest $request): JsonResponse
     {
         $email = $request->input('email');
-        $otp   = $request->input('otp');
+        $otp = $request->input('otp');
 
         [$found, $foundRole] = $this->findUserByEmail($email);
 
@@ -242,7 +242,7 @@ class AuthController extends Controller
             ], 404);
         }
 
-        $role       = Role::where('role_name', $foundRole)->first();
+        $role = Role::where('role_name', $foundRole)->first();
         $primaryKey = $found->getKeyName();
 
         // Chỉ lấy OTP thật (6 ký tự), không lấy reset_token (64 ký tự)
@@ -265,8 +265,8 @@ class AuthController extends Controller
         if ($resetRecord->attempts >= 3) {
             $secondsLeft = max(0, now()->diffInSeconds($resetRecord->expired_at, false));
             return response()->json([
-                'success'      => false,
-                'message'      => 'Mã OTP đã bị vô hiệu hoá do nhập sai quá 3 lần.',
+                'success' => false,
+                'message' => 'Mã OTP đã bị vô hiệu hoá do nhập sai quá 3 lần.',
                 'seconds_left' => $secondsLeft,
             ], 429);
         }
@@ -285,12 +285,12 @@ class AuthController extends Controller
 
             if ($newAttempts >= 3) {
                 $resetRecord->update([
-                    'attempts'   => $newAttempts,
+                    'attempts' => $newAttempts,
                     'expired_at' => now()->addSeconds(60),
                 ]);
                 return response()->json([
-                    'success'      => false,
-                    'message'      => 'Mã OTP đã bị vô hiệu hoá do nhập sai quá 3 lần.',
+                    'success' => false,
+                    'message' => 'Mã OTP đã bị vô hiệu hoá do nhập sai quá 3 lần.',
                     'seconds_left' => 60,
                 ], 429);
             }
@@ -298,8 +298,8 @@ class AuthController extends Controller
             $resetRecord->update(['attempts' => $newAttempts]);
 
             return response()->json([
-                'success'       => false,
-                'message'       => 'Mã OTP không chính xác.',
+                'success' => false,
+                'message' => 'Mã OTP không chính xác.',
                 'attempts_left' => 3 - $newAttempts,
             ], 400);
         }
@@ -309,14 +309,14 @@ class AuthController extends Controller
 
         $resetRecord->update([
             'reset_token' => $resetToken,
-            'is_used'     => 0,
-            'attempts'    => 0,
-            'expired_at'  => now()->addMinutes(10),
+            'is_used' => 0,
+            'attempts' => 0,
+            'expired_at' => now()->addMinutes(10),
         ]);
 
         return response()->json([
-            'success'     => true,
-            'message'     => 'Xác thực OTP thành công.',
+            'success' => true,
+            'message' => 'Xác thực OTP thành công.',
             'reset_token' => $resetToken,
         ], 200);
     }
@@ -326,8 +326,8 @@ class AuthController extends Controller
 
     public function resetPassword(ResetPasswordRequest $request): JsonResponse
     {
-        $email       = $request->input('email');
-        $resetToken  = $request->input('reset_token');
+        $email = $request->input('email');
+        $resetToken = $request->input('reset_token');
         $newPassword = $request->input('password');
 
         [$found, $foundRole] = $this->findUserByEmail($email);
@@ -339,7 +339,7 @@ class AuthController extends Controller
             ], 404);
         }
 
-        $role       = Role::where('role_name', $foundRole)->first();
+        $role = Role::where('role_name', $foundRole)->first();
         $primaryKey = $found->getKeyName();
 
         $resetRecord = PasswordReset::where('user_id', $found->$primaryKey)
@@ -383,12 +383,12 @@ class AuthController extends Controller
     }
 
     // UC4: Đổi mật khẩu (đang đăng nhập)
-   
+
     public function changePassword(ChangePasswordRequest $request): JsonResponse
     {
-        $user            = $request->user();
+        $user = $request->user();
         $currentPassword = $request->input('current_password');
-        $newPassword     = $request->input('password');
+        $newPassword = $request->input('password');
 
         // Mật khẩu hiện tại không đúng
         if (!Hash::check($currentPassword, $user->password)) {
@@ -407,7 +407,7 @@ class AuthController extends Controller
         }
 
         $user->update([
-            'password'    => Hash::make($newPassword),
+            'password' => Hash::make($newPassword),
             'first_login' => 0,
         ]);
 
@@ -436,7 +436,7 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => [
+            'data' => [
                 'user' => new UserResource($user, $role),
                 'role' => $role,
             ],

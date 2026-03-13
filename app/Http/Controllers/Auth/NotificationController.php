@@ -36,9 +36,9 @@ class NotificationController extends Controller
         ], 200);
     }
 
-    // ════════════════════════════════════════
+
     // UC8 - Đánh dấu đã đọc
-    // ════════════════════════════════════════
+
     public function markAsRead(Request $request, int $id): JsonResponse
     {
         $user       = $request->user();

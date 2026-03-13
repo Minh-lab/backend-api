@@ -14,9 +14,9 @@ use Illuminate\Support\Facades\Storage;
 
 class LeaveRequestController extends Controller
 {
-    // ════════════════════════════════════════
+
     // UC7 - Tạo yêu cầu nghỉ phép
-    // ════════════════════════════════════════
+ 
     public function store(LeaveRequest $request): JsonResponse
     {
         $lecturer   = $request->user();
@@ -54,9 +54,9 @@ class LeaveRequestController extends Controller
         ], 201);
     }
 
-    // ════════════════════════════════════════
+ 
     // Helper: Gửi thông báo cho FacultyStaff
-    // ════════════════════════════════════════
+
     private function notifyFacultyStaff(string $lecturerName, int $requestId): void
     {
         $notification = Notification::create([
