@@ -412,7 +412,7 @@ class AuthController extends Controller
         ]);
 
         // Xoá tất cả token → bắt đăng nhập lại
-        $user->tokens()->delete();
+        // $user->tokens()->delete();
 
         return response()->json([
             'success' => true,
