@@ -38,7 +38,7 @@ class Lecturer extends Authenticatable
         'dob' => 'date',
     ];
 
-    // ===================== RELATIONSHIPS =====================
+    //  RELATIONSHIPS
 
     public function expertises()
     {
