@@ -23,7 +23,7 @@ class UserResource extends JsonResource
         return match ($this->role) {
             'student' => $this->studentData(),
             'lecturer' => $this->lecturerData(),
-            'faculty-staff' => $this->facultyStaffData(),
+            'faculty_staff' => $this->facultyStaffData(),
             'admin' => $this->adminData(),
             'company' => $this->companyData(),
             default => [],

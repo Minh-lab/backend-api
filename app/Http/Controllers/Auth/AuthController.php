@@ -42,7 +42,7 @@ class AuthController extends Controller
                 return [$user, $roleName];
             }
         }
-        return [null, null];
+        return [null, null]; //user và rolename
     }
 
 
@@ -134,6 +134,8 @@ class AuthController extends Controller
             $found->load('studentClass');
         } elseif ($foundRole === 'lecturer') {
             $found->load('expertises');
+        } elseif ($foundRole === 'faculty_staff') {
+            $found->load('topics');
         }
 
         return response()->json([
