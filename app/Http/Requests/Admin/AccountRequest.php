@@ -36,7 +36,7 @@ class AccountRequest extends FormRequest
 
             // Quy tắc cho Student (Sinh viên)
             if ($role === 'student') {
-                $rules['student_id'] = 'required|string|max:255';
+                // $rules['student_id'] = 'required|string|max:255';
                 $rules['full_name'] = 'required|string|max:255';
                 $rules['gender'] = 'required|in:male,female,other';
                 $rules['dob'] = 'required|date';
@@ -46,7 +46,7 @@ class AccountRequest extends FormRequest
             }
             // Quy tắc cho Lecturer (Giảng viên)
             elseif ($role === 'lecturer') {
-                $rules['lecturer_id'] = 'required|string|max:255';
+                // $rules['lecturer_id'] = 'required|string|max:255';
                 $rules['full_name'] = 'required|string|max:255';
                 $rules['gender'] = 'required|in:male,female,other';
                 $rules['dob'] = 'required|date';
@@ -56,14 +56,14 @@ class AccountRequest extends FormRequest
             }
             // Quy tắc cho Faculty Staff (Văn phòng khoa)
             elseif ($role === 'faculty_staff') {
-                $rules['faculty_staff_id'] = 'required|string|max:255';
+                // $rules['faculty_staff_id'] = 'required|string|max:255';
                 $rules['full_name'] = 'required|string|max:255';
                 $rules['gender'] = 'required|in:male,female,other';
                 $rules['dob'] = 'required|date';
             }
             // Quy tắc cho Admin (Quản trị viên)
             elseif ($role === 'admin') {
-                $rules['admin_id'] = 'required|string|max:255';
+                // $rules['admin_id'] = 'required|string|max:255';
                 $rules['full_name'] = 'required|string|max:255';
                 $rules['gender'] = 'required|in:male,female,other';
                 $rules['dob'] = 'required|date';

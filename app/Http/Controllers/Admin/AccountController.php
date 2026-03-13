@@ -269,6 +269,7 @@ class AccountController extends Controller
                 $userData['phone_number'] = $request->input('phone_number');
             }
         } elseif ($role === 'company') {
+            $userData['user_code'] = $request->input('user_code');
             $userData['address'] = $request->input('address');
             $userData['website'] = $request->input('website');
             $userData['is_partnered'] = (bool) $request->input('is_partnered');

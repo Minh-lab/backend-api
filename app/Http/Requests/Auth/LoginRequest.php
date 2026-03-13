@@ -20,9 +20,8 @@ class LoginRequest extends FormRequest
             'password' => [
                 'required', 
                 'string', 
-                'min:8', 
-                // Regex: Ít nhất 1 chữ hoa (?=.*[A-Z]) và ít nhất 1 chữ số (?=.*\d)
-                'regex:/^(?=.*[A-Z])(?=.*\d).+$/', 
+                // Regex: Ít nhất 8 ký tự (.{8,}), 1 chữ hoa (?=.*[A-Z]), 1 chữ số (?=.*\d)
+                'regex:/^(?=.*[A-Z])(?=.*\d).{8,}$/', 
             ],
         ];
     }

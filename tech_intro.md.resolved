@@ -1,20 +1,6 @@
 # Giới Thiệu Công Nghệ Sử Dụng
 
-> Hệ thống quản lý thực tập & đồ án tốt nghiệp — Nhóm N1 Team 3
-
----
-
-## Mục lục
-
-- [Tổng quan kiến trúc](#tổng-quan-kiến-trúc)
-- [Backend](#backend)
-- [Frontend](#frontend)
-- [Hạ tầng](#hạ-tầng-infrastructure)
-- [Tóm tắt stack](#tóm-tắt-stack)
-
----
-
-## Tổng quan kiến trúc
+## 🗂️ Tổng quan kiến trúc
 
 Dự án áp dụng kiến trúc **Client-Server** với mô hình **RESTful API**, tách biệt hoàn toàn giữa frontend và backend. Cả hai giao tiếp với nhau thông qua HTTP request sử dụng JSON.
 
@@ -25,7 +11,7 @@ Dự án áp dụng kiến trúc **Client-Server** với mô hình **RESTful API
 
 ---
 
-## Backend
+## ⚙️ Backend
 
 ### PHP 8.2 + Laravel 12
 
@@ -52,7 +38,7 @@ Dự án áp dụng kiến trúc **Client-Server** với mô hình **RESTful API
 
 ---
 
-## Frontend
+## 🎨 Frontend
 
 ### React 19 + Vite 7
 
@@ -95,7 +81,7 @@ Dự án áp dụng kiến trúc **Client-Server** với mô hình **RESTful API
 
 ---
 
-## Hạ tầng (Infrastructure)
+## 🐳 Hạ tầng (Infrastructure)
 
 ### Docker + Docker Compose
 
@@ -106,7 +92,7 @@ Dự án áp dụng kiến trúc **Client-Server** với mô hình **RESTful API
 
 ---
 
-## Tóm tắt stack
+## 📌 Tóm tắt stack
 
 | Tầng | Công nghệ |
 |---|---|
