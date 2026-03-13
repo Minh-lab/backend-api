@@ -14,7 +14,7 @@ Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/password/otp-requests',       [AuthController::class, 'forgotPassword']);  // Bước 1: Gửi OTP
 Route::post('/password/otp/verifications',  [AuthController::class, 'verifyOtp']);       // Bước 2: Xác thực OTP
 Route::put('/password/reset',               [AuthController::class, 'resetPassword']);   // Bước 3: Đặt mật khẩu mới
-    
+//Reset
 
 // PROTECTED - Cần token
 
