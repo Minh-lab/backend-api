@@ -187,7 +187,7 @@ class AccountController extends Controller
             $data['user_code'] = $user->user_code ?? null;
             $data['address'] = $user->address;
             $data['website'] = $user->website;
-            $data['is_partnered'] = (bool) $user->is_partnered;
+            $data['is_partnered'] = (int) $user->is_partnered;
         }
 
         return response()->json([
@@ -272,7 +272,7 @@ class AccountController extends Controller
             $userData['user_code'] = $request->input('user_code');
             $userData['address'] = $request->input('address');
             $userData['website'] = $request->input('website');
-            $userData['is_partnered'] = (bool) $request->input('is_partnered');
+            $userData['is_partnered'] = (int) $request->input('is_partnered', 0);
         }
 
         // Thêm is_active nếu bảng có
@@ -467,7 +467,7 @@ class AccountController extends Controller
                 $updateData['website'] = $request->input('website');
             }
             if ($request->has('is_partnered')) {
-                $updateData['is_partnered'] = (bool) $request->input('is_partnered');
+                $updateData['is_partnered'] = (int) $request->input('is_partnered');
             }
         }
 
