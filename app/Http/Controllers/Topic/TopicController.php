@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Topic;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Topic\TopicRequest;
+use App\Http\Resources\TopicResource;
 
 use App\Models\Topic;
 use App\Models\Expertise;
