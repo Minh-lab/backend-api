@@ -24,7 +24,7 @@ class TopicController extends Controller
         $expertiseId = $request->query('expertise_id');
         $perPage     = max(1, min((int) $request->query('per_page', 10), 100));
 
-        $query = Topic::select('topic_id', 'title', 'technologies', 'description', 'expertise_id', 'created_at');
+        $query = Topic::query();
 
         // Tìm theo keyword (title)
         if (strlen($keyword) >= 2) {
