@@ -30,7 +30,7 @@ class FacultyStaff extends Authenticatable
         'password',
     ];
 
-    // ===================== RELATIONSHIPS =====================
+    // tunde RELATIONSHIPS 
 
     public function topics()
     {

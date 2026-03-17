@@ -39,8 +39,8 @@ class Student extends Authenticatable
         'gpa' => 'decimal:2',
     ];
 
-    // ===================== RELATIONSHIPS =====================
-    public function class()
+    //  RELATIONSHIPS 
+    public function studentClass()
     {
         return $this->belongsTo(\App\Models\Classes::class, 'class_id', 'class_id');
     }

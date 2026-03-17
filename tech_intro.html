@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Giới Thiệu Công Nghệ Sử Dụng</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 13pt;
+      line-height: 1.8;
+      color: #000;
+      background: #fff;
+      padding: 40px 60px;
+      max-width: 850px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 20pt;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 4px;
+      border-bottom: 2px solid #000;
+      padding-bottom: 8px;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-style: italic;
+      margin-bottom: 24px;
+      font-size: 11pt;
+    }
+
+    h2 {
+      font-size: 14pt;
+      font-weight: bold;
+      margin: 24px 0 8px;
+      border-bottom: 1px solid #000;
+      padding-bottom: 3px;
+    }
+
+    h3 {
+      font-size: 13pt;
+      font-weight: bold;
+      margin: 16px 0 6px;
+    }
+
+    p {
+      margin-bottom: 8px;
+    }
+
+    ul {
+      padding-left: 24px;
+      margin-bottom: 8px;
+    }
+
+    ul li {
+      margin-bottom: 4px;
+    }
+
+    code {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 11pt;
+
+      padding: 1px 4px;
+
+    }
+
+    pre {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 10pt;
+
+
+      padding: 10px 14px;
+      margin: 10px 0;
+      line-height: 1.5;
+      white-space: pre;
+    }
+
+    blockquote {
+      border-left: 3px solid #555;
+      padding: 6px 14px;
+      margin: 10px 0;
+      font-style: italic;
+      color: #333;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+      font-size: 12pt;
+    }
+
+    th {
+
+      font-weight: bold;
+      padding: 7px 10px;
+      border: 1px solid #999;
+      text-align: left;
+    }
+
+    td {
+      padding: 6px 10px;
+      border: 1px solid #bbb;
+    }
+
+    tr:nth-child(even) td {}
+
+    hr {
+      border: none;
+      border-top: 1px solid #bbb;
+      margin: 18px 0;
+    }
+
+    .toc {
+      border: 1px solid #bbb;
+      padding: 12px 20px;
+      margin-bottom: 20px;
+      font-size: 12pt;
+    }
+
+    .toc p {
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .toc ol {
+      padding-left: 20px;
+    }
+
+    .toc li {
+      margin-bottom: 2px;
+    }
+
+    @media print {
+      body {
+        padding: 15px 30px;
+      }
+
+      h2 {
+        page-break-after: avoid;
+      }
+
+      h3 {
+        page-break-after: avoid;
+      }
+
+      table {
+        page-break-inside: avoid;
+      }
+
+      pre {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Giới Thiệu Công Nghệ Sử Dụng</h1>
+  <p class="subtitle">Hệ thống quản lý thực tập &amp; đồ án tốt nghiệp &mdash; Nhóm N1 Team 3</p>
+
+  <div class="toc">
+    <p>Mục lục</p>
+    <ol>
+      <li>Tổng quan kiến trúc</li>
+      <li>Backend &mdash; PHP 8.2, Laravel 12, MySQL</li>
+      <li>Frontend &mdash; React 19, Vite 7, TailwindCSS 4</li>
+      <li>Hạ tầng &mdash; Docker &amp; Docker Compose</li>
+      <li>Tóm tắt stack</li>
+    </ol>
+  </div>
+
+  <hr>
+
+  <h2>1. Tổng quan kiến trúc</h2>
+  <p>Dự án áp dụng kiến trúc <strong>Client-Server</strong> với mô hình <strong>RESTful API</strong>, tách biệt hoàn
+    toàn giữa frontend và backend. Cả hai giao tiếp với nhau thông qua <strong>HTTP request</strong> sử dụng định dạng
+    <strong>JSON</strong>.
+  </p>
+  <pre>
+
+│   Frontend - React   │  &lt;──────────────────&gt;   │  Backend - Laravel   │ &lt;──&gt; │  MySQL  │
+     Port :3000                                       Port :8000            
+                        </pre>
+
+  <hr>
+
+  <h2>2. Backend</h2>
+
+  <h3>2.1. PHP 8.2 + Laravel 12</h3>
+  <p><strong>Laravel</strong> là PHP framework theo mô hình <strong>MVC (Model &ndash; View &ndash;
+      Controller)</strong>.</p>
+  <table>
+    <tr>
+      <th>Lý do chọn</th>
+      <th>Chi tiết</th>
+    </tr>
+    <tr>
+      <td><strong>Năng suất cao</strong></td>
+      <td>Eloquent ORM, Route, Middleware giúp code nhanh, dễ đọc</td>
+    </tr>
+    <tr>
+      <td><strong>Hệ sinh thái phong phú</strong></td>
+      <td>Có sẵn package xử lý xác thực, queue, mail, v.v.</td>
+    </tr>
+    <tr>
+      <td><strong>Dễ học</strong></td>
+      <td>Tài liệu phong phú, cộng đồng lớn, phù hợp nhóm sinh viên</td>
+    </tr>
+    <tr>
+      <td><strong>Phiên bản mới nhất</strong></td>
+      <td>Laravel 12 + PHP 8.2 với hiệu năng cải thiện đáng kể</td>
+    </tr>
+  </table>
+
+  <h3>2.2. Laravel Sanctum (Xác thực)</h3>
+  <p><strong>Laravel Sanctum</strong> là package xác thực chính thức của Laravel, được dùng để cấp phát và quản lý API
+    token.</p>
+  <ul>
+    <li><strong>Nhẹ và đơn giản:</strong> Được thiết kế riêng cho SPA và mobile API.</li>
+    <li><strong>Hỗ trợ đa hình (Polymorphic Token):</strong> Lưu token kèm <code>tokenable_type</code> và
+      <code>tokenable_id</code>, tự động nhận diện đúng model (Admin / Sinh viên / Giảng viên / Doanh nghiệp) mà không
+      cần bảng <code>users</code> chung.
+    </li>
+    <li><strong>Tích hợp sẵn trong Laravel:</strong> Không cần cài thêm thư viện bên ngoài.</li>
+  </ul>
+
+
+  <h3>2.3. MySQL (Cơ sở dữ liệu)</h3>
+  <ul>
+    <li>Hệ quản trị CSDL quan hệ phổ biến nhất, phù hợp dữ liệu có cấu trúc rõ ràng (sinh viên, đề tài, thực tập...).
+    </li>
+    <li>Tích hợp tốt với <strong>Laravel Eloquent ORM</strong>.</li>
+  </ul>
+
+  <hr>
+
+  <h2>3. Frontend</h2>
+
+  <h3>3.1. React 19 + Vite 7</h3>
+  <p><strong>React</strong> là thư viện JavaScript của <strong>Meta</strong> để xây dựng giao diện theo mô hình
+    <strong>Component</strong>.
+  </p>
+  <table>
+    <tr>
+      <th>Lý do chọn</th>
+      <th>Chi tiết</th>
+    </tr>
+    <tr>
+      <td><strong>Component-based</strong></td>
+      <td>Chia UI thành các thành phần tái sử dụng, dễ bảo trì và mở rộng</td>
+    </tr>
+    <tr>
+      <td><strong>Cộng đồng lớn nhất</strong></td>
+      <td>Tài nguyên học tập, thư viện hỗ trợ phong phú nhất hiện tại</td>
+    </tr>
+    <tr>
+      <td><strong>Vite thay CRA</strong></td>
+      <td>Hot-reload cực nhanh nhờ ES Module, build production nhẹ và tối ưu hơn</td>
+    </tr>
+  </table>
+
+  <h3>3.2. TailwindCSS 4</h3>
+  <ul>
+    <li>Viết style trực tiếp trong JSX bằng <strong>utility class</strong> &mdash; không cần tạo file <code>.css</code>
+      riêng.</li>
+    <li>Đảm bảo <strong>nhất quán design system</strong>, dễ responsive trên mọi thiết bị.</li>
+    <li><strong>v4</strong> &mdash; phiên bản mới nhất, nhanh hơn đáng kể so với v3.</li>
+  </ul>
+
+  <h3>3.3. shadcn/ui (UI Components)</h3>
+  <ul>
+    <li>Bộ component đẹp, chuẩn <strong>accessibility</strong>, xây dựng trên <strong>Radix UI</strong>.</li>
+    <li>Code component được copy thẳng vào project &rarr; <strong>toàn quyền tùy chỉnh</strong>, không bị lock-in bởi
+      npm package.</li>
+  </ul>
+
+  <h3>3.4. Các thư viện hỗ trợ khác</h3>
+  <table>
+    <tr>
+      <th>Thư viện</th>
+      <th>Phiên bản</th>
+      <th>Mục đích</th>
+    </tr>
+    <tr>
+      <td><code>react-router-dom</code></td>
+      <td>v7</td>
+      <td>Điều hướng trang (routing)</td>
+    </tr>
+    <tr>
+      <td><code>axios</code></td>
+      <td>v1</td>
+      <td>Gọi HTTP request đến API</td>
+    </tr>
+    <tr>
+      <td><code>zustand</code></td>
+      <td>v5</td>
+      <td>Quản lý state toàn cục (token, thông tin user)</td>
+    </tr>
+    <tr>
+      <td><code>react-hook-form</code> + <code>yup</code></td>
+      <td>v7 + v1</td>
+      <td>Xử lý &amp; validate form</td>
+    </tr>
+    <tr>
+      <td><code>@tanstack/react-table</code></td>
+      <td>v8</td>
+      <td>Bảng dữ liệu phức tạp (phân trang, filter)</td>
+    </tr>
+    <tr>
+      <td><code>sonner</code></td>
+      <td>v2</td>
+      <td>Hiển thị thông báo toast</td>
+    </tr>
+    <tr>
+      <td><code>lucide-react</code></td>
+      <td>latest</td>
+      <td>Bộ icon nhẹ, đẹp</td>
+    </tr>
+  </table>
+
+  <hr>
+
+  <h2>4. Hạ tầng (Infrastructure)</h2>
+
+  <h3>4.1. Docker + Docker Compose</h3>
+  <table>
+    <tr>
+      <th>Lý do chọn</th>
+      <th>Chi tiết</th>
+    </tr>
+    <tr>
+      <td><strong>Đồng nhất môi trường</strong></td>
+      <td>Mọi thành viên chạy cùng môi trường &mdash; không còn lỗi "máy tôi chạy được mà máy anh không chạy"</td>
+    </tr>
+    <tr>
+      <td><strong>Dễ triển khai</strong></td>
+      <td>Chỉ cần <code>docker compose up</code> là toàn bộ hệ thống khởi động</td>
+    </tr>
+    <tr>
+      <td><strong>Phù hợp làm nhóm</strong></td>
+      <td>Chuẩn hóa môi trường dev cho cả team</td>
+    </tr>
+  </table>
+
+  <hr>
+
+  <h2>5. Tóm tắt stack</h2>
+  <table>
+    <tr>
+      <th>Tầng</th>
+      <th>Công nghệ</th>
+      <th>Phiên bản</th>
+    </tr>
+    <tr>
+      <td><strong>Frontend</strong></td>
+      <td>React, Vite, TailwindCSS, shadcn/ui</td>
+      <td>19 / 7 / 4 / latest</td>
+    </tr>
+    <tr>
+      <td><strong>Backend</strong></td>
+      <td>PHP, Laravel, Laravel Sanctum</td>
+      <td>8.2 / 12 / 4.x</td>
+    </tr>
+    <tr>
+      <td><strong>Database</strong></td>
+      <td>MySQL</td>
+      <td>8.x</td>
+    </tr>
+    <tr>
+      <td><strong>Infra / DevOps</strong></td>
+      <td>Docker, Docker Compose</td>
+      <td>latest</td>
+    </tr>
+    <tr>
+      <td><strong>Giao tiếp</strong></td>
+      <td>RESTful API (JSON over HTTP)</td>
+      <td>&mdash;</td>
+    </tr>
+  </table>
+
+</body>
+
+</html>

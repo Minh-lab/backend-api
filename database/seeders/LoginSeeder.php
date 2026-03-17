@@ -13,7 +13,7 @@ class LoginSeeder extends Seeder
         $roles = DB::table('roles')->pluck('role_id', 'role_name');
 
         // Kiểm tra đủ roles chưa
-        $required = ['admin', 'faculty-staff', 'lecturer', 'student', 'company'];
+        $required = ['admin', 'faculty_staff', 'lecturer', 'student', 'company'];
         foreach ($required as $r) {
             if (!isset($roles[$r])) {
                 $this->command->error("Thiếu role: {$r} — chạy RoleSeeder trước!");
@@ -30,7 +30,7 @@ class LoginSeeder extends Seeder
 
         // Faculty staffs (VPK)
         foreach ([1, 2, 3] as $id) {
-            $rows[] = ['user_id' => $id, 'role_id' => $roles['faculty-staff']];
+            $rows[] = ['user_id' => $id, 'role_id' => $roles['faculty_staff']];
         }
 
         // Lecturers

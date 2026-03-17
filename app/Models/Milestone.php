@@ -13,18 +13,20 @@ class Milestone extends Model
         'phase_name',
         'description',
         'type',
-        'deadline',
+        'start_date',
+        'end_date',
     ];
 
     protected $casts = [
-        'deadline' => 'datetime',
+        'start_date' => 'datetime',
+        'end_date' => 'datetime',
     ];
 
     // Các loại milestone
     const TYPE_CAPSTONE    = 'CAPSTONE';
     const TYPE_INTERNSHIP  = 'INTERNSHIP';
 
-    // ===================== RELATIONSHIPS =====================
+  //relationships
 
     public function semester()
     {
@@ -41,7 +43,6 @@ class Milestone extends Model
         return $this->hasMany(InternshipReport::class, 'milestone_id', 'milestone_id');
     }
 
-    // ===================== SCOPES =====================
 
     public function scopeCapstone($query)
     {

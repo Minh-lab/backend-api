@@ -36,7 +36,7 @@ class Company extends Authenticatable
         'is_partnered' => 'boolean',
     ];
 
-    // ===================== RELATIONSHIPS =====================
+    // RELATIONSHIPS 
 
     public function internships()
     {

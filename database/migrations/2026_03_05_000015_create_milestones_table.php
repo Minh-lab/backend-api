@@ -16,7 +16,8 @@ return new class extends Migration {
             $table->string('phase_name', 255)->notNull();
             $table->text('description')->nullable();
             $table->string('type', 50)->notNull(); // CAPSTONE | INTERNSHIP
-            $table->dateTime('deadline')->notNull();
+            $table->dateTime('start_date')->notNull();
+            $table->dateTime('end_date')->notNull();
             $table->timestamps();
 
             $table->foreign('semester_id')->references('semester_id')->on('semesters')->onDelete('cascade');

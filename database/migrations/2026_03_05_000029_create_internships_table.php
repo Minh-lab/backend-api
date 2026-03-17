@@ -13,8 +13,8 @@ return new class extends Migration {
         Schema::create('internships', function (Blueprint $table) {
             $table->bigIncrements('internship_id');
             $table->unsignedBigInteger('student_id');
-            $table->unsignedBigInteger('lecturer_id');
-            $table->unsignedBigInteger('company_id');
+            $table->unsignedBigInteger('lecturer_id')->nullable();
+            $table->unsignedBigInteger('company_id')->nullable();
             $table->unsignedBigInteger('semester_id');
             $table->string('status', 100)->default('INITIALIZED');
             // INITIALIZED | LECTURER_APPROVED | COMPANY_APPROVED

@@ -2,16 +2,29 @@
 
 use App\Http\Controllers\Lecturer\LecturerController;
 use App\Http\Controllers\Internship\InternshipController;
+use App\Http\Controllers\Lecturer\LeaveRequestController;
+use App\Http\Controllers\Lecturer\ProfileController;
 use Illuminate\Support\Facades\Route;
 
-// Các route cho VPK (Duyệt nghỉ phép - UC 48)
-Route::middleware(['auth:sanctum', 'role:vpk'])->prefix('vpk')->group(function () {
-    Route::get('/lecturers', [LecturerController::class, 'index']);           // Bước 2: Danh sách
-    Route::get('/lecturers/{id}', [LecturerController::class, 'show']);       // Bước 4: Chi tiết
-    Route::post('/lecturers/{id}/approve', [LecturerController::class, 'approveLeave']); // Bước 5: Duyệt
-});
+// UC6 - Chuyên môn | UC7 - Nghỉ phép (Lecturer)
+Route::prefix('lecturer')
+    ->middleware(['auth:sanctum', 'role:lecturer'])
+    ->group(function () {
+        Route::get('/expertises',      [ProfileController::class, 'getExpertises']);
+        Route::put('/expertises',      [ProfileController::class, 'updateExpertises']);
+        Route::post('/leave-requests', [LeaveRequestController::class, 'store']);
+    });
 
-// Các route chung hoặc cho vai trò khác (UC 47)
+// UC48 - VPK duyệt nghỉ phép
+Route::prefix('vpk')
+    ->middleware(['auth:sanctum', 'role:vpk'])
+    ->group(function () {
+        Route::get('/lecturers',               [LecturerController::class, 'index']);
+        Route::get('/lecturers/{id}',          [LecturerController::class, 'show']);
+        Route::post('/lecturers/{id}/approve', [LecturerController::class, 'approveLeave']);
+    });
+
+// UC47 - Tìm kiếm giảng viên (VPK, Admin, Student)
 Route::middleware(['auth:sanctum', 'role:vpk,admin,student'])->group(function () {
     Route::get('/lecturers/search', [LecturerController::class, 'index']);
 });
@@ -40,4 +53,5 @@ Route::middleware(['auth:sanctum', 'role:lecturer'])->prefix('lecturer/internshi
     // UC 39.1
     Route::get('/pending-cancels', [InternshipController::class, 'getPendingCancelLecturer']);
     Route::post('/review-cancel/{id}', [InternshipController::class, 'reviewCancelLecturer']);
+});
 });
