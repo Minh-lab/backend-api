@@ -59,7 +59,7 @@ class SemesterController extends Controller
             ->join('academic_years', 'semesters.year_id', '=', 'academic_years.year_id')
             ->orderBy('academic_years.year_name', 'desc')
             ->orderBy('semesters.semester_name', 'desc')
-            ->select('semesters.*')
+            ->select('semesters.*', 'academic_years.year_name')
             ->paginate($perPage);
 
         return response()->json([
