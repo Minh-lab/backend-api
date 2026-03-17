@@ -32,12 +32,11 @@ class UserResource extends JsonResource
 
 
     // SINH VIÊN
-    // Hiển thị: mã SV, họ tên, giới tính, ngày sinh, lớp, email, GPA
+    // Hiển thị: mã SV, họ tên, giới tính, ngày sinh, lớp, email, GPA, ngành học
 
     private function studentData(): array
-    
     {
-        
+
         return [
             'student_id' => $this->student_id,
             'usercode' => $this->usercode,
@@ -50,6 +49,12 @@ class UserResource extends JsonResource
             'email' => $this->email,
             'gpa' => $this->gpa,
             'current_topic' => $this->getStudentStatuses($this->student_id)['capstone'] ?? null,
+            'major' => $this->relationLoaded('studentClass')
+                ? ($this->studentClass?->relationLoaded('major')
+                    ? ($this->studentClass->major?->major_name ?? null)
+                    : null)
+                : null,
+
         ];
     }
 
@@ -159,9 +164,9 @@ class UserResource extends JsonResource
         // Ưu tiên 1: đang nghỉ phép – tìm qua bảng request vì lecturer_leaves không
         // chứa cột lecturer_id, chỉ có khóa ngoại request_id.
         $isOnLeave = LecturerLeave::whereHas('request', function ($q) use ($lecturerId) {
-                $q->where('lecturer_id', $lecturerId)
-                  ->where('status', 'APPROVED');
-            })
+            $q->where('lecturer_id', $lecturerId)
+                ->where('status', 'APPROVED');
+        })
             ->where('start_date', '<=', now())
             ->where('end_date', '>=', now())
             ->exists();

@@ -431,7 +431,8 @@ class AuthController extends Controller
 
         // Eager load relations theo role
         if ($role === 'student') {
-            $user->load('studentClass');
+            $user->load('studentClass', 'studentClass.major');
+
             //SELECT * FROM classes WHERE class_id = {class_id của sinh viên đó}
         } elseif ($role === 'lecturer') {
             $user->load('expertises');
