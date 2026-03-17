@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Admin\TopicController;
+use App\Http\Controllers\TopicController;
 use Illuminate\Support\Facades\Route;
 
 
