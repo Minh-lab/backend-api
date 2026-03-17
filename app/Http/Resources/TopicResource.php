@@ -29,7 +29,7 @@ class TopicResource extends JsonResource
         $expertise = $this->relationLoaded('expertise')
             ? [
                 'expertise_id' => $this->expertise?->expertise_id,
-                'name'         => $this->expertise?->expertise_name,
+                'name'         => $this->expertise?->name,
             ]
             : null;
 

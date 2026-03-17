@@ -18,11 +18,11 @@ class TopicController extends Controller
     // GET /topics?keyword=&technology=&description=&expertise_id=&page=&per_page=
     public function index(Request $request)
     {
-        $keyword     = trim($request->query('keyword', ''));
-        $technology  = trim($request->query('technology', ''));
+        $keyword = trim($request->query('keyword', ''));
+        $technology = trim($request->query('technology', ''));
         $description = trim($request->query('description', ''));
         $expertiseId = $request->query('expertise_id');
-        $perPage     = max(1, min((int) $request->query('per_page', 10), 100));
+        $perPage = max(1, min((int)$request->query('per_page', 10), 100));
 
         $query = Topic::with('expertise')->select('topic_id', 'title', 'technologies', 'description', 'expertise_id', 'created_at');
 
@@ -52,11 +52,11 @@ class TopicController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $topics->items(),
-            'meta'    => [
-                'total'     => $topics->total(),
-                'page'      => $topics->currentPage(),
-                'per_page'  => $topics->perPage(),
+            'data' => $topics->items(),
+            'meta' => [
+                'total' => $topics->total(),
+                'page' => $topics->currentPage(),
+                'per_page' => $topics->perPage(),
                 'last_page' => $topics->lastPage(),
             ]
         ]);

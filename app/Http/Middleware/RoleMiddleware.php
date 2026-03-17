@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 
 class RoleMiddleware
 {
-    public function handle(Request $request, Closure $next, string ...$roles): mixed
+    public function handle(Request $request, Closure $next, string...$roles): mixed
     {
         $user = $request->user(); // Sanctum tự resolve model
 

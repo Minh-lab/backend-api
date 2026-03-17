@@ -16,7 +16,7 @@ Route::prefix('lecturer')
 
 // UC48 - VPK duyệt nghỉ phép
 Route::prefix('vpk')
-    ->middleware(['auth:sanctum', 'role:vpk'])
+    ->middleware(['auth:sanctum', 'role:faculty_staff'])
     ->group(function () {
         Route::get('/lecturers',               [LecturerController::class, 'index']);
         Route::get('/lecturers/{id}',          [LecturerController::class, 'show']);
@@ -24,6 +24,6 @@ Route::prefix('vpk')
     });
 
 // UC47 - Tìm kiếm giảng viên (VPK, Admin, Student)
-Route::middleware(['auth:sanctum', 'role:vpk,admin,student'])->group(function () {
+Route::middleware(['auth:sanctum', 'role:faculty_staff,admin,student'])->group(function () {
     Route::get('/lecturers/search', [LecturerController::class, 'index']);
 });
