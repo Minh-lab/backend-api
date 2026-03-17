@@ -52,7 +52,7 @@ class TopicController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $topics->items(),
+            'data'    => TopicResource::collection($topics->items()),
             'meta'    => [
                 'total'     => $topics->total(),
                 'page'      => $topics->currentPage(),
