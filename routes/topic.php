@@ -3,6 +3,10 @@
 use App\Http\Controllers\Topic\TopicController;
 use Illuminate\Support\Facades\Route;
 
+// UC 13: Browse topics - All authenticated users can view topics
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/topics', [TopicController::class, 'index']);  // UC 13 - Tìm kiếm đề tài
+});
 
 // UC13: Tìm kiếm đề tài
 Route::get('/topics', [TopicController::class , 'index']);
