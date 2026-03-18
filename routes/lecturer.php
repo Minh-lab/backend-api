@@ -24,7 +24,6 @@ Route::prefix('vpk')
     });
 
 // UC47 - Tìm kiếm giảng viên (VPK, Admin, Student)
-Route::middleware(['auth:sanctum', 'role:faculty_staff,admin,student'])->group(function () {
+Route::middleware(['auth:sanctum', 'role:faculty_staff,admin,student,lecturer,company'])->group(function () {
     Route::get('/lecturers/search', [LecturerController::class , 'index']);
 });
-
