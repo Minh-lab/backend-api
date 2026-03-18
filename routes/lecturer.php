@@ -27,3 +27,4 @@ Route::prefix('vpk')
 Route::middleware(['auth:sanctum', 'role:faculty_staff,admin,student'])->group(function () {
     Route::get('/lecturers/search', [LecturerController::class , 'index']);
 });
+
