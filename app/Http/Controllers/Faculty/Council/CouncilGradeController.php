@@ -101,7 +101,19 @@ class CouncilGradeController extends Controller
         }
 
         // Kiểm tra xem còn thời gian nhập điểm hay không
-        $milestone = $this->milestoneService->getMilestone('Grade project', $capstone->semester_id);
+        Log::info('CouncilGrade updateGrade - debug', [
+            'councilId' => $councilId,
+            'capstoneId' => $capstoneId,
+            'semester_id' => $capstone->semester_id,
+            'capstone_data' => $capstone->toArray()
+        ]);
+        
+        $milestone = $this->milestoneService->getMilestone('Chấm điểm đồ án', $capstone->semester_id);
+        
+        Log::info('CouncilGrade milestone result', [
+            'found' => $milestone ? true : false,
+            'milestone_data' => $milestone ? $milestone->toArray() : null
+        ]);
 
         if (!$milestone) {
             return response()->json([
@@ -111,7 +123,7 @@ class CouncilGradeController extends Controller
         }
 
         // Check nếu ngoài thời gian nhập điểm
-        if (!$this->milestoneService->isMilestoneActive('Grade project', $capstone->semester_id)) {
+        if (!$this->milestoneService->isMilestoneActive('Chấm điểm đồ án', $capstone->semester_id)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Thời gian nhập điểm đã hết. Không thể cập nhật điểm.',

@@ -54,4 +54,4 @@ Route::middleware(['auth:sanctum', 'role:lecturer'])->prefix('lecturer/internshi
     Route::get('/pending-cancels', [InternshipController::class, 'getPendingCancelLecturer']);
     Route::post('/review-cancel/{id}', [InternshipController::class, 'reviewCancelLecturer']);
 });
-});
+

@@ -11,6 +11,7 @@ use App\Models\Expertise;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class TopicController extends Controller
 {
@@ -26,6 +27,15 @@ class TopicController extends Controller
         $perPage     = max(1, min((int) $request->query('per_page', 10), 100));
 
         $query = Topic::query();
+
+        // Filter by current user if they're accessing via /lecturer route
+        // Lecturers only see their own topics
+        // Faculty staff can see all topics
+        $user = Auth::user();
+        if ($user && get_class($user) === \App\Models\Lecturer::class) {
+            // Lecturers only see their own topics
+            $query->where('lecturer_id', $user->lecturer_id);
+        }
 
         // Tìm theo keyword (title)
         if (strlen($keyword) >= 2) {
@@ -49,6 +59,9 @@ class TopicController extends Controller
             $query->where('expertise_id', $expertiseId);
         }
 
+        // Eager load relationships
+        $query->with(['expertise', 'lecturer', 'facultyStaff']);
+
         $topics = $query->paginate($perPage);
 
         return response()->json([
@@ -69,12 +82,25 @@ class TopicController extends Controller
     {
         $data = $request->validated();
 
+        // Auto-set lecturer_id or faculty_staff_id based on user type
+        $user = Auth::user();
+        if ($user && get_class($user) === \App\Models\Lecturer::class) {
+            $data['lecturer_id'] = $user->lecturer_id;
+            $data['faculty_staff_id'] = null;
+        } else if ($user && get_class($user) === \App\Models\FacultyStaff::class) {
+            $data['faculty_staff_id'] = $user->faculty_staff_id;
+            $data['lecturer_id'] = null;
+        }
+
         $topic = Topic::create($data);
+        
+        // Load relationships
+        $topic->load(['expertise', 'lecturer', 'facultyStaff']);
 
         return response()->json([
             'success' => true,
             'message' => 'Thêm đề tài thành công',
-            'data' => $topic
+            'data' => TopicResource::make($topic)
         ], 201);
     }
 
@@ -86,12 +112,25 @@ class TopicController extends Controller
 
         $topic = Topic::findOrFail($id);
 
+        // Check authorization - lecturers can only edit their own topics
+        // Faculty staff can edit any topic
+        $user = Auth::user();
+        if ($user && get_class($user) === \App\Models\Lecturer::class && $topic->lecturer_id !== $user->lecturer_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn không có quyền sửa đề tài này'
+            ], 403);
+        }
+
         $topic->update($data);
+        
+        // Load relationships
+        $topic->load(['expertise', 'lecturer', 'facultyStaff']);
 
         return response()->json([
             'success' => true,
             'message' => 'Cập nhật đề tài thành công',
-            'data' => $topic
+            'data' => TopicResource::make($topic)
         ]);
     }
 
@@ -100,6 +139,16 @@ class TopicController extends Controller
     public function destroy(string $id)
     {
         $topic = Topic::findOrFail($id);
+
+        // Check authorization - lecturers can only delete their own topics
+        // Faculty staff can delete any topic
+        $user = Auth::user();
+        if ($user && get_class($user) === \App\Models\Lecturer::class && $topic->lecturer_id !== $user->lecturer_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn không có quyền xóa đề tài này'
+            ], 403);
+        }
 
         $topic->delete();
 

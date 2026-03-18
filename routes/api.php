@@ -13,4 +13,5 @@ Route::prefix('v1')->group(function () {
     require base_path('routes/business.php');
     require base_path('routes/notification.php');
     require base_path('routes/faculty.php');
+    require base_path('routes/topic.php');
 });

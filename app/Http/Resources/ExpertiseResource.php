@@ -10,9 +10,9 @@ class ExpertiseResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'expertise_id'   => $this->expertise_id,
-            'expertise_name' => $this->name,
-            'description'    => $this->description ?? '',
+            'expertise_id' => $this->expertise_id,
+            'name'         => $this->name,
+            'description'  => $this->description ?? '',
         ];
     }
 }
