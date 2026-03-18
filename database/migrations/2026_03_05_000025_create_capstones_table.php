@@ -14,8 +14,8 @@ return new class extends Migration {
         Schema::create('capstones', function (Blueprint $table) {
             $table->bigIncrements('capstone_id');
             $table->unsignedBigInteger('topic_id');
-            $table->unsignedBigInteger('student_id');
-            $table->unsignedBigInteger('lecturer_id');
+            $table->unsignedBigInteger('student_id')->nullable();
+            $table->unsignedBigInteger('lecturer_id')->nullable();
             $table->unsignedBigInteger('council_id')->nullable();
             $table->unsignedBigInteger('semester_id');
             $table->string('status', 100)->default('INITIALIZED');

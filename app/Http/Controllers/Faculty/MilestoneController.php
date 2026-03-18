@@ -32,6 +32,24 @@ class MilestoneController extends Controller
         ], 201);
     }
 
+    public function storeForSemester(StoreMileStonesRequest $request, int $id): JsonResponse
+    {
+        $milestone = Milestone::create([
+            'semester_id' => $id,
+            'phase_name'  => $request->input('phase_name'),
+            'description' => $request->input('description'),
+            'type'        => $request->input('type'),
+            'start_date'  => $request->input('start_date'),
+            'end_date'    => $request->input('end_date'),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Thêm mốc thời gian thành công.',
+            'data'    => $milestone,
+        ], 201);
+    }
+
     /**
      * UC: Sửa mốc thời gian
      * Chỉ Văn phòng Khoa (faculty_staff) mới được phép thực hiện.

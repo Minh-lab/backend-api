@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->unsignedBigInteger('council_id');
             $table->unsignedBigInteger('lecturer_id');
             $table->primary(['council_id', 'lecturer_id']);
-            $table->string('position', 100)->notNull();
+            $table->string('position', 100)->nullable();
             // chairman | secretary | member | reviewer_member
             $table->timestamps();
 

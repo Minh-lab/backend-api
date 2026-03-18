@@ -3,20 +3,23 @@
 use App\Http\Controllers\Faculty\MilestoneController;
 use App\Http\Controllers\Faculty\SemesterController;
 use Illuminate\Support\Facades\Route;
+ 
 
-Route::prefix('faculty')
-    ->middleware(['auth:sanctum', 'role:faculty_staff'])
+Route::middleware(['auth:sanctum', 'role:faculty_staff'])
+    ->prefix('faculty')
     ->group(function () {
 
-        // UC: Lấy danh sách học kỳ - chỉ văn phòng khoa
-        Route::get('/semesters', [SemesterController::class, 'index']);
+        // SEMESTER 
+        Route::get('semesters',      [SemesterController::class, 'index']); // Danh sách + phân trang
+        Route::post('semesters',     [SemesterController::class, 'store']); // Thêm mới
+        Route::get('semesters/{id}', [SemesterController::class, 'show']);  // Chi tiết + year_name
 
-        // UC: Thêm học kỳ - chỉ văn phòng khoa
-        Route::post('/semesters', [SemesterController::class, 'store']);
+        //  MILESTONE theo SEMESTER 
+        Route::get('semesters/{id}/milestones',               [SemesterController::class, 'milestones']);
+        Route::get('semesters/{id}/milestones/{milestoneId}', [SemesterController::class, 'showMilestone']);
+        Route::post('semesters/{id}/milestones',              [MilestoneController::class, 'storeForSemester']);
 
-        // UC: Thêm mốc thời gian - chỉ văn phòng khoa
-        Route::post('/milestones', [MilestoneController::class, 'store']);
-
-        // UC: Sửa mốc thời gian - chỉ văn phòng khoa
-        Route::put('/milestones/{milestone}', [MilestoneController::class, 'update']);
+        // MILESTONE CRUD
+        Route::post('milestones',            [MilestoneController::class, 'store']);
+        Route::put('milestones/{milestone}', [MilestoneController::class, 'update']);
     });

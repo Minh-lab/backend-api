@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Topic;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Topic\TopicRequest;
+use App\Http\Resources\TopicResource;
 
 use App\Models\Topic;
 use App\Models\Expertise;
@@ -52,7 +53,7 @@ class TopicController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $topics->items(),
+            'data' => TopicResource::collection($topics->items()),
             'meta' => [
                 'total' => $topics->total(),
                 'page' => $topics->currentPage(),
