@@ -6,18 +6,18 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class SearchLecturerRequest extends FormRequest
 {
-    public function authorize()
+    public function authorize(): bool
     {
         return true;
     }
 
-    public function rules()
+    public function rules(): array
     {
         return [
-            'keyword'      => 'nullable|string|max:255',
-            'department'   => 'nullable|string',
-            'expertise_id' => 'nullable|integer',
-            'per_page'     => 'nullable|integer|min:1|max:100',
+            'keyword'           => 'nullable|string|max:255',
+            'expertise_id'      => 'nullable|exists:expertises,expertise_id',
+            'slot_status'       => 'nullable|in:available,full', // Còn slot / Hết slot
+            'acceptance_status' => 'nullable|in:accepting,busy', // Nhận thêm / Không nhận
         ];
     }
 }

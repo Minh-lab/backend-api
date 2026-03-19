@@ -9,25 +9,60 @@ use App\Http\Resources\LecturerResource;
 use App\Http\Requests\Lecturer\SearchLecturerRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Http\Resources\Lecturer\LecturerSearchResource;
+use Illuminate\Database\Eloquent\Builder;
 
 class LecturerController extends Controller
 {
     /**
      * UC 47: Tìm kiếm giảng viên
      */
-    public function index(SearchLecturerRequest $request)
+    public function search(SearchLecturerRequest $request)
     {
-        $query = Lecturer::query()->with('expertises');
+        // Sử dụng eager loading và count để tối ưu tốc độ < 2s (NFR-1)
+        $query = Lecturer::with(['expertises'])
+            ->withCount(['internships', 'capstones']);
 
+        // 1. Tìm theo tên giảng viên (Bước 2)
         if ($request->filled('keyword')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('full_name', 'like', '%' . $request->keyword . '%')
-                    ->orWhere('usercode', 'like', '%' . $request->keyword . '%');
+            $query->where('full_name', 'like', '%' . $request->keyword . '%');
+        }
+
+        // 2. Lọc theo chuyên môn (expertise)
+        if ($request->filled('expertise_id')) {
+            $query->whereHas('expertises', function (Builder $q) use ($request) {
+                $q->where('expertises.expertise_id', $request->expertise_id);
             });
         }
 
-        $lecturers = $query->paginate($request->get('per_page', 10));
-        return LecturerResource::collection($lecturers);
+        // 3. Lọc theo trạng thái Slot (Còn/Hết)
+        if ($request->filled('slot_status')) {
+            $max = 30;
+            if ($request->slot_status === 'full') {
+                $query->havingRaw('(internships_count + capstones_count) >= ?', [$max]);
+            } else {
+                $query->havingRaw('(internships_count + capstones_count) < ?', [$max]);
+            }
+        }
+
+        // 4. Lọc theo trạng thái tiếp nhận (Nhận thêm / Không nhận)
+        if ($request->filled('acceptance_status')) {
+            if ($request->acceptance_status === 'busy') {
+                // Đang nghỉ phép hoặc đã hết slot
+                $query->whereHas('leaves', function ($q) {
+                    $q->where('status', 'LEAVE_ACTIVE');
+                })->orHavingRaw('(internships_count + capstones_count) >= 30');
+            } else {
+                // Không nghỉ phép VÀ còn slot
+                $query->whereDoesntHave('leaves', function ($q) {
+                    $q->where('status', 'LEAVE_ACTIVE');
+                })->havingRaw('(internships_count + capstones_count) < 30');
+            }
+        }
+
+        $lecturers = $query->paginate(10);
+
+        return LecturerSearchResource::collection($lecturers);
     }
 
     /**
