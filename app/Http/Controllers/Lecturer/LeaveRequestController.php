@@ -16,10 +16,10 @@ class LeaveRequestController extends Controller
 {
 
     // UC7 - Tạo yêu cầu nghỉ phép
- 
+
     public function store(LeaveRequest $request): JsonResponse
     {
-        $lecturer   = $request->user();
+        $lecturer = $request->user();
         $lecturerId = $lecturer->lecturer_id;
 
         // Upload file đơn nghỉ phép
@@ -28,13 +28,13 @@ class LeaveRequestController extends Controller
 
         $leaveRequest = LecturerRequest::create([
             'lecturer_id' => $lecturerId,
-            'type'        => 'LEAVE_REQ',
-            'status'      => 'PENDING',
-            'title'       => $request->input('title'),
+            'type' => 'LEAVE_REQ',
+            'status' => 'PENDING',
+            'title' => $request->input('title'),
             'description' => $request->input('description'),
-            'file_path'   => $filePath,
-            'start_date'  => $request->input('start_date'),
-            'end_date'    => $request->input('end_date'),
+            'file_path' => $filePath,
+            'start_date' => $request->input('start_date'),
+            'end_date' => $request->input('end_date'),
         ]);
 
         // Gửi thông báo cho toàn bộ FacultyStaff
@@ -43,36 +43,38 @@ class LeaveRequestController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Gửi yêu cầu thành công.',
-            'data'    => [
+            'data' => [
                 'request_id' => $leaveRequest->request_id,
-                'title'      => $leaveRequest->title,
-                'status'     => $leaveRequest->status,
+                'title' => $leaveRequest->title,
+                'status' => $leaveRequest->status,
                 'start_date' => $leaveRequest->start_date,
-                'end_date'   => $leaveRequest->end_date,
-                'file_url'   => Storage::url($filePath),
+                'end_date' => $leaveRequest->end_date,
+                'file_url' => Storage::url($filePath),
             ],
         ], 201);
     }
 
- 
+
     // Helper: Gửi thông báo cho FacultyStaff
 
     private function notifyFacultyStaff(string $lecturerName, int $requestId): void
     {
         $notification = Notification::create([
-            'title'   => 'Yêu cầu nghỉ phép mới',
+            'title' => 'Yêu cầu nghỉ phép mới',
             'content' => "Giảng viên {$lecturerName} đã gửi yêu cầu nghỉ phép dài hạn. Mã yêu cầu: #{$requestId}",
         ]);
 
         $facultyStaffList = FacultyStaff::all();
-        $now              = now();
+        $now = now();
 
+        // Cách sửa 1: Truyền cứng role_id (nếu bạn biết cứng ID của FacultyStaff là mấy, ví dụ 2)
         $userNotifications = $facultyStaffList->map(fn($fs) => [
-            'notification_id' => $notification->notification_id,
-            'user_id'         => $fs->faculty_staff_id,
-            'is_read'         => 0,
-            'created_at'      => $now,
-            'updated_at'      => $now,
+        'notification_id' => $notification->notification_id,
+        'user_id' => $fs->faculty_staff_id,
+        'role_id' => 2, // <---- THÊM DÒNG NÀY (Thay số 2 bằng ID Role của chuyên viên)
+        'is_read' => 0,
+        'created_at' => $now,
+        'updated_at' => $now,
         ])->toArray();
 
         UserNotification::insert($userNotifications);

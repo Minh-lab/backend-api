@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Faculty;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Faculty\StoreSemesterRequest;
-use App\Http\Resources\SemesterResource;
 use App\Models\AcademicYear;
 use App\Models\Milestone;
 use App\Models\Semester;
@@ -60,7 +59,7 @@ class SemesterController extends Controller
             ->join('academic_years', 'semesters.year_id', '=', 'academic_years.year_id')
             ->orderBy('academic_years.year_name', 'desc')
             ->orderBy('semesters.semester_name', 'desc')
-            ->select('semesters.*')
+            ->select('semesters.*', 'academic_years.year_name')
             ->paginate($perPage);
 
         return response()->json([
@@ -92,7 +91,15 @@ class SemesterController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => new SemesterResource($semester),
+            'data' => [
+                'semester_id' => $semester->semester_id,
+                'semester_name' => $semester->semester_name,
+                'start_date' => $semester->start_date,
+                'end_date' => $semester->end_date,
+                'year_name' => $semester->academicYear?->year_name,
+                'start_year' => $semester->academicYear?->start_year,
+                'end_year' => $semester->academicYear?->end_year,
+            ],
         ], 200);
     }
 

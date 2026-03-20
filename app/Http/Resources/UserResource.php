@@ -39,6 +39,7 @@ class UserResource extends JsonResource
 
         return [
             'student_id' => $this->student_id,
+            'student_code' => $this->usercode,
             'usercode' => $this->usercode,
             'full_name' => $this->full_name,
             'gender' => $this->gender,
@@ -53,6 +54,7 @@ class UserResource extends JsonResource
                     ? ($this->studentClass->major?->major_name ?? null)
                     : null)
                 : null,
+            'status_list'  => $this->getStudentStatusList($this->student_id), // Danh sách trạng thái
 
         ];
     }
@@ -89,7 +91,8 @@ class UserResource extends JsonResource
 
         return [
             'lecturer_id' => $lecturerId,
-            'usercode' => $this->usercode,
+            'lecturer_code' => $this->usercode,
+            // 'usercode' => $this->usercode,
             'full_name' => $this->full_name,
             'gender' => $this->gender,
             'dob' => $this->dob,
@@ -101,6 +104,7 @@ class UserResource extends JsonResource
             'status' => $this->getLecturerStatus($lecturerId), // ACTIVE | ON_LEAVE | MAX_LOAD
             'capstone_count' => $capstoneCount,        // Số SV đồ án đang hướng dẫn
             'internship_count' => $internshipCount,      // Số SV thực tập đang hướng dẫn
+            'supervised_student_count' => $capstoneCount + $internshipCount, // Tổng số SV đang hướng dẫn
         ];
     }
 
@@ -191,32 +195,25 @@ class UserResource extends JsonResource
         return 'ACTIVE';
     }
 
-    // ════════════════════════════════════════
-    // HELPER: Trạng thái sinh viên
-    // Trả về trạng thái đồ án + thực tập đang hoạt động
-    // ════════════════════════════════════════
-    // private function getStudentStatuses(int $studentId): array
-    // {
-    //     $capstone = Capstone::where('student_id', $studentId)
-    //         ->whereNotIn('status', ['COMPLETED', 'FAILED', 'CANCEL'])
-    //         ->latest('created_at')
-    //         ->first();
+    private function getStudentStatusList(int $studentId): array
+    {
+        $capstone = Capstone::where('student_id', $studentId)
+            ->latest('created_at')
+            ->first();
 
-    //     $internship = Internship::where('student_id', $studentId)
-    //         ->whereNotIn('status', ['COMPLETED', 'FAILED', 'CANCEL'])
-    //         ->latest('created_at')
-    //         ->first();
+        $internship = Internship::where('student_id', $studentId)
+            ->latest('created_at')
+            ->first();
 
-    //     return [
-    //         'capstone' => $capstone ? [
-    //             'capstone_id' => $capstone->capstone_id,
-    //             'status'      => $capstone->status,
-    //         ] : null,
-
-    //         'internship' => $internship ? [
-    //             'internship_id' => $internship->internship_id,
-    //             'status'        => $internship->status,
-    //         ] : null,
-    //     ];
-    // }
+        return [
+            'capstone' => $capstone ? [
+                'capstone_id' => $capstone->capstone_id,
+                'status'      => $capstone->status,
+            ] : null,
+            'internship' => $internship ? [
+                'internship_id' => $internship->internship_id,
+                'status'        => $internship->status,
+            ] : null,
+        ];
+    }
 }

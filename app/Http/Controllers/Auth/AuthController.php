@@ -131,7 +131,7 @@ class AuthController extends Controller
 
         // Eager load relations cho UserResource
         if ($foundRole === 'student') {
-            $found->load('studentClass');
+            $found->load('studentClass.major');
         } elseif ($foundRole === 'lecturer') {
             $found->load('expertises');
         } elseif ($foundRole === 'faculty_staff') {

@@ -3,27 +3,56 @@
 namespace App\Http\Controllers\Internship;
 
 use App\Http\Controllers\Controller;
-use App\Models\Internship;
-use App\Http\Requests\Internship\RegisterInternshipRequest;
-use App\Http\Resources\Internship\InternshipResource;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+
+// Models
+use App\Models\Internship;
+use App\Models\Milestone;
+use App\Models\Company;
+use App\Models\ProposedCompany;
+use App\Models\InternshipRequest;
+use App\Models\InternshipReport;
+use App\Models\Lecturer;
+use App\Models\LecturerLeave;
+use App\Models\Notification;
+use App\Models\UserNotification;
+use App\Models\Semester;
+
+// Requests
+use App\Http\Requests\Internship\RegisterInternshipRequest;
 use App\Http\Requests\Internship\SearchInternshipRequest;
-use App\Http\Resources\Internship\InternshipSearchResource;
 use App\Http\Requests\Internship\AssignCompanyRequest;
-use App\Http\Resources\Internship\CompanySlotResource;
 use App\Http\Requests\Internship\AssignLecturerRequest;
-use App\Http\Resources\Internship\LecturerSlotResource;
 use App\Http\Requests\Internship\GradeInternshipRequest;
-use App\Http\Resources\Internship\InternshipGradeResource;
 use App\Http\Requests\Internship\EvaluateStudentRequest;
-use App\Http\Resources\Internship\CompanyInternshipResource;
 use App\Http\Requests\Internship\ReviewCancelRequest;
-use App\Http\Resources\Internship\CancelRequestDetailResource;
 use App\Http\Requests\Internship\CancelInternshipRequest;
+use App\Http\Requests\Internship\RegisterCompanyRequest;
+use App\Http\Requests\Internship\ApproveCompanyRequest;
+use App\Http\Requests\Internship\SubmitReportRequest;
+use App\Http\Requests\Internship\ReviewReportRequest;
+use App\Http\Requests\Internship\StatisticInternshipRequest;
+use App\Http\Requests\Internship\ConfirmStudentRequest;
+
+// Resources
+use App\Http\Resources\Internship\InternshipResource;
+use App\Http\Resources\Internship\InternshipSearchResource;
+use App\Http\Resources\Internship\CompanySlotResource;
+use App\Http\Resources\Internship\LecturerSlotResource;
+use App\Http\Resources\Internship\InternshipGradeResource;
+use App\Http\Resources\Internship\CompanyInternshipResource;
+use App\Http\Resources\Internship\CancelRequestDetailResource;
 use App\Http\Resources\Internship\CancelRequestResource;
+use App\Http\Resources\Internship\InternshipRequestResource;
+use App\Http\Resources\Internship\CompanyPendingResource;
+use App\Http\Resources\Internship\ReportReviewResource;
+use App\Http\Resources\Internship\InternshipStatisticResource;
+use App\Http\Resources\Internship\BusinessStudentResource;
+use App\Http\Resources\Internship\InternshipReportResource;
 
 class InternshipController extends Controller
 {
@@ -55,9 +84,9 @@ class InternshipController extends Controller
         // 3. Luồng chính: Tạo bản ghi thực tập mới
         return DB::transaction(function () use ($studentId, $milestone) {
             $internship = Internship::create([
-                'student_id'  => $studentId,
+                'student_id' => $studentId,
                 'semester_id' => $milestone->semester_id,
-                'status'      => 'INITIALIZED', // Trạng thái khởi tạo bản ghi
+                'status' => 'INITIALIZED', // Trạng thái khởi tạo bản ghi
             ]);
 
             return (new InternshipResource($internship))
@@ -75,10 +104,10 @@ class InternshipController extends Controller
         $official = Company::where('usercode', $taxCode)->first();
         if ($official) {
             return response()->json([
-                'exists'   => true,
-                'type'     => 'OFFICIAL',
+                'exists' => true,
+                'type' => 'OFFICIAL',
                 'readonly' => true, // BR-1
-                'data'     => $official
+                'data' => $official
             ]);
         }
 
@@ -86,10 +115,10 @@ class InternshipController extends Controller
         $proposed = ProposedCompany::where('tax_code', $taxCode)->first();
         if ($proposed) {
             return response()->json([
-                'exists'   => true,
-                'type'     => 'PROPOSED',
+                'exists' => true,
+                'type' => 'PROPOSED',
                 'readonly' => false, // BR-1
-                'data'     => $proposed
+                'data' => $proposed
             ]);
         }
 
@@ -116,14 +145,15 @@ class InternshipController extends Controller
             $official = Company::where('usercode', $request->tax_code)->first();
             if ($official) {
                 $companyId = $official->company_id;
-            } else {
+            }
+            else {
                 $proposed = ProposedCompany::updateOrCreate(
-                    ['tax_code' => $request->tax_code],
-                    [
-                        'name'          => $request->name,
-                        'address'       => $request->address,
-                        'contact_email' => $request->email,
-                    ]
+                ['tax_code' => $request->tax_code],
+                [
+                    'name' => $request->name,
+                    'address' => $request->address,
+                    'contact_email' => $request->email,
+                ]
                 );
                 $proposedId = $proposed->proposed_company_id;
             }
@@ -133,13 +163,13 @@ class InternshipController extends Controller
 
             // Bước 10: Lưu bản ghi đăng ký
             $internReq = InternshipRequest::create([
-                'internship_id'       => $request->internship_id,
-                'company_id'          => $companyId,
+                'internship_id' => $request->internship_id,
+                'company_id' => $companyId,
                 'proposed_company_id' => $proposedId,
-                'type'                => InternshipRequest::TYPE_COMPANY_REG,
-                'status'              => InternshipRequest::STATUS_PENDING_FACULTY,
-                'student_message'     => $request->position, // Lưu vị trí thực tập
-                'file_path'           => $path,
+                'type' => InternshipRequest::TYPE_COMPANY_REG,
+                'status' => InternshipRequest::STATUS_PENDING_FACULTY,
+                'student_message' => $request->position, // Lưu vị trí thực tập
+                'file_path' => $path,
             ]);
 
             return (new InternshipRequestResource($internReq))
@@ -181,12 +211,12 @@ class InternshipController extends Controller
                     $proposed = $internReq->proposedCompany;
 
                     $newCompany = Company::create([
-                        'usercode'     => $proposed->tax_code,
-                        'name'         => $request->company_name ?? $proposed->name,
-                        'email'        => $request->company_email ?? $proposed->contact_email,
-                        'address'      => $request->company_address ?? $proposed->address,
-                        'password'     => Hash::make($proposed->tax_code), // Pass mặc định là MST
-                        'is_active'    => true,
+                        'usercode' => $proposed->tax_code,
+                        'name' => $request->company_name ?? $proposed->name,
+                        'email' => $request->company_email ?? $proposed->contact_email,
+                        'address' => $request->company_address ?? $proposed->address,
+                        'password' => Hash::make($proposed->tax_code), // Pass mặc định là MST
+                        'is_active' => true,
                         'is_partnered' => true,
                     ]);
 
@@ -199,16 +229,17 @@ class InternshipController extends Controller
                 // Cập nhật thông tin doanh nghiệp vào bản ghi Internship của các SV được chọn (BR-4)
                 $internReq->internship()->update([
                     'company_id' => $internReq->company_id,
-                    'status'     => 'COMPANY_APPROVED'
+                    'status' => 'COMPANY_APPROVED'
                 ]);
 
-                // Bước 9: Gửi email (Giả định có Class Mail)
-                // Mail::to($internReq->company->email)->send(new InternshipResultMail($request->status));
+            // Bước 9: Gửi email (Giả định có Class Mail)
+            // Mail::to($internReq->company->email)->send(new InternshipResultMail($request->status));
 
-            } else {
+            }
+            else {
                 // 6a: Từ chối
                 $internReq->update([
-                    'status'   => InternshipRequest::STATUS_REJECTED,
+                    'status' => InternshipRequest::STATUS_REJECTED,
                     'feedback' => $request->feedback
                 ]);
             }
@@ -269,11 +300,11 @@ class InternshipController extends Controller
 
             // Tạo bản ghi báo cáo mới (Lưu lịch sử các version cũ - BR-2)
             $report = InternshipReport::create([
-                'internship_id'   => $internship->internship_id,
-                'milestone_id'    => $milestone->milestone_id,
-                'status'          => InternshipReport::STATUS_PENDING,
-                'description'     => $request->description,
-                'file_path'       => $path,
+                'internship_id' => $internship->internship_id,
+                'milestone_id' => $milestone->milestone_id,
+                'status' => InternshipReport::STATUS_PENDING,
+                'description' => $request->description,
+                'file_path' => $path,
                 'submission_date' => Carbon::now(),
             ]);
 
@@ -321,9 +352,9 @@ class InternshipController extends Controller
 
         // Cập nhật trạng thái và nhận xét (Bước 8)
         $report->update([
-            'status'            => $request->status,
+            'status' => $request->status,
             'lecturer_feedback' => $request->feedback,
-            'updated_at'        => Carbon::now()
+            'updated_at' => Carbon::now()
         ]);
 
         // Bước 9: Gửi thông báo cho sinh viên (Có thể dùng Queue/Notification)
@@ -332,7 +363,7 @@ class InternshipController extends Controller
         return response()->json([
             'success' => true,
             'message' => $request->status === 'APPROVED' ? 'Đã duyệt báo cáo thành công.' : 'Đã từ chối báo cáo.',
-            'data'    => new ReportReviewResource($report)
+            'data' => new ReportReviewResource($report)
         ]);
     }
     /**
@@ -416,10 +447,10 @@ class InternshipController extends Controller
             $affected = Internship::whereIn('internship_id', $internshipIds)
                 ->where('status', 'INITIALIZED') // BR-1
                 ->update([
-                    'company_id' => $company->company_id,
-                    'status'     => 'COMPANY_APPROVED', // Trạng thái sau phân công
-                    'updated_at' => Carbon::now()
-                ]);
+                'company_id' => $company->company_id,
+                'status' => 'COMPANY_APPROVED', // Trạng thái sau phân công
+                'updated_at' => Carbon::now()
+            ]);
 
             if ($affected === 0) {
                 return response()->json(['message' => 'Không có sinh viên hợp lệ để phân công.'], 400);
@@ -427,7 +458,7 @@ class InternshipController extends Controller
 
             // Bước 11: Gửi thông báo cho sinh viên
             $notification = Notification::create([
-                'title'   => 'Thông báo phân công thực tập',
+                'title' => 'Thông báo phân công thực tập',
                 'content' => "Bạn đã được phân công thực tập tại doanh nghiệp: {$company->name}."
             ]);
 
@@ -435,9 +466,9 @@ class InternshipController extends Controller
             foreach ($studentIds as $id) {
                 UserNotification::create([
                     'notification_id' => $notification->notification_id,
-                    'user_id'         => $id,
-                    'role_id'         => 1, // Giả định 1 là Role Student
-                    'is_read'         => false
+                    'user_id' => $id,
+                    'role_id' => 1, // Giả định 1 là Role Student
+                    'is_read' => false
                 ]);
             }
 
@@ -494,8 +525,8 @@ class InternshipController extends Controller
             // Bước 5: Tạo yêu cầu hủy
             $cancelReq = InternshipRequest::create([
                 'internship_id' => $internship->internship_id,
-                'type'          => InternshipRequest::TYPE_CANCEL_REQ,
-                'status'        => InternshipRequest::STATUS_PENDING_FACULTY, // Chờ VPK xử lý
+                'type' => InternshipRequest::TYPE_CANCEL_REQ,
+                'status' => InternshipRequest::STATUS_PENDING_FACULTY, // Chờ VPK xử lý
                 'student_message' => 'Sinh viên yêu cầu hủy học phần thực tập.',
             ]);
 
@@ -522,8 +553,8 @@ class InternshipController extends Controller
         $requests = InternshipRequest::where('type', InternshipRequest::TYPE_CANCEL_REQ)
             ->where('status', InternshipRequest::STATUS_PENDING_TEACHER)
             ->whereHas('internship', function ($q) use ($lecturerId) {
-                $q->where('lecturer_id', $lecturerId);
-            })->get();
+            $q->where('lecturer_id', $lecturerId);
+        })->get();
 
         return CancelRequestDetailResource::collection($requests);
     }
@@ -535,15 +566,17 @@ class InternshipController extends Controller
             $cancelReq = InternshipRequest::where('type', InternshipRequest::TYPE_CANCEL_REQ)
                 ->where('status', InternshipRequest::STATUS_PENDING_TEACHER)
                 ->whereHas('internship', function ($q) use ($lecturerId) {
-                    $q->where('lecturer_id', $lecturerId);
-                })->findOrFail($id);
+                $q->where('lecturer_id', $lecturerId);
+            }
+            )->findOrFail($id);
 
             if ($request->status === 'APPROVED') {
                 // Bước 5: Chuyển lên VPK (PENDING_FACULTY)
                 $cancelReq->update(['status' => InternshipRequest::STATUS_PENDING_FACULTY]);
-                // Bước 6: Thông báo cho VPK (Giả định role_id của VPK là 3)
-                // logic gửi thông báo cho VPK...
-            } else {
+            // Bước 6: Thông báo cho VPK (Giả định role_id của VPK là 3)
+            // logic gửi thông báo cho VPK...
+            }
+            else {
                 // 4a: Từ chối -> Kết thúc yêu cầu
                 $cancelReq->update(['status' => InternshipRequest::STATUS_REJECTED, 'feedback' => $request->feedback]);
                 $this->notifyStudent($cancelReq->internship->student_id, "Yêu cầu hủy thực tập bị từ chối bởi GVHD.");
@@ -582,7 +615,8 @@ class InternshipController extends Controller
                 // BR-2: Slot doanh nghiệp tự động tăng lên do count() chỉ tính SV active
 
                 $this->notifyStudent($internship->student_id, "Học phần thực tập của bạn đã chính thức được hủy.");
-            } else {
+            }
+            else {
                 // 3a: Từ chối
                 $cancelReq->update(['status' => InternshipRequest::STATUS_REJECTED, 'feedback' => $request->feedback]);
                 $this->notifyStudent($cancelReq->internship->student_id, "VPK từ chối yêu cầu hủy thực tập của bạn.");
@@ -635,21 +669,21 @@ class InternshipController extends Controller
             // Bước 8: Cập nhật giảng viên hướng dẫn cho sinh viên
             Internship::whereIn('internship_id', $internshipIds)->update([
                 'lecturer_id' => $lecturer->lecturer_id,
-                'status'      => 'LECTURER_APPROVED', // Cập nhật trạng thái
-                'updated_at'  => Carbon::now()
+                'status' => 'LECTURER_APPROVED', // Cập nhật trạng thái
+                'updated_at' => Carbon::now()
             ]);
 
             // Bước 9: Gửi thông báo cho cả Sinh viên và Giảng viên
             $notification = Notification::create([
-                'title'   => 'Thông báo phân công GVHD thực tập',
+                'title' => 'Thông báo phân công GVHD thực tập',
                 'content' => "Hệ thống đã phân công Giảng viên {$lecturer->full_name} hướng dẫn thực tập."
             ]);
 
             // Gửi cho Giảng viên
             UserNotification::create([
                 'notification_id' => $notification->notification_id,
-                'user_id'         => $lecturer->lecturer_id,
-                'role_id'         => 2, // Giả định 2 là Lecturer
+                'user_id' => $lecturer->lecturer_id,
+                'role_id' => 2, // Giả định 2 là Lecturer
             ]);
 
             // Gửi cho danh sách Sinh viên
@@ -657,8 +691,8 @@ class InternshipController extends Controller
             foreach ($studentIds as $sId) {
                 UserNotification::create([
                     'notification_id' => $notification->notification_id,
-                    'user_id'         => $sId,
-                    'role_id'         => 1, // Giả định 1 là Student
+                    'user_id' => $sId,
+                    'role_id' => 1, // Giả định 1 là Student
                 ]);
             }
 
@@ -686,7 +720,7 @@ class InternshipController extends Controller
 
         $students = Internship::where('lecturer_id', $lecturerId)
             ->whereHas('internshipReports') // BR-2: Đã nộp báo cáo
-            ->with(['student.class'])
+            ->with(['student.studentClass'])
             ->get();
 
         return InternshipGradeResource::collection($students);
@@ -722,20 +756,20 @@ class InternshipController extends Controller
 
             // Bước 12: Gửi thông báo cho sinh viên
             $notification = Notification::create([
-                'title'   => 'Thông báo kết quả điểm thực tập',
+                'title' => 'Thông báo kết quả điểm thực tập',
                 'content' => "Kết quả thực tập của bạn đã có. Điểm tổng kết: {$finalGrade}. Trạng thái: {$internship->status}."
             ]);
 
             UserNotification::create([
                 'notification_id' => $notification->notification_id,
-                'user_id'         => $internship->student_id,
-                'role_id'         => 1, // Student
+                'user_id' => $internship->student_id,
+                'role_id' => 1, // Student
             ]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Chấm điểm thành công (Bước 12)',
-                'data'    => new InternshipGradeResource($internship)
+                'data' => new InternshipGradeResource($internship)
             ]);
         });
     }
@@ -750,7 +784,7 @@ class InternshipController extends Controller
         // Lấy sinh viên có trạng thái 'COMPANY_APPROVED' (VPK đã duyệt/phân công nhưng DN chưa xác nhận)
         $students = Internship::where('company_id', $companyId)
             ->where('status', 'COMPANY_APPROVED')
-            ->with(['student.class'])
+            ->with(['student.studentClass'])
             ->get();
 
         return BusinessStudentResource::collection($students);
@@ -774,7 +808,8 @@ class InternshipController extends Controller
                 $internship->status = 'INTERNING';
                 $messageTitle = "Doanh nghiệp đã tiếp nhận";
                 $messageContent = "Chúc mừng! Doanh nghiệp đã xác nhận tiếp nhận bạn vào thực tập.";
-            } else {
+            }
+            else {
                 // Luồng 4a: Từ chối -> Chuyển về trạng thái 'CANCEL' để SV tìm chỗ khác
                 $internship->status = 'CANCEL';
                 $messageTitle = "Doanh nghiệp từ chối tiếp nhận";
@@ -786,15 +821,15 @@ class InternshipController extends Controller
 
             // Bước 7 & 4a3: Gửi thông báo cho sinh viên
             $notification = Notification::create([
-                'title'   => $messageTitle,
+                'title' => $messageTitle,
                 'content' => $messageContent
             ]);
 
             UserNotification::create([
                 'notification_id' => $notification->notification_id,
-                'user_id'         => $internship->student_id,
-                'role_id'         => 1, // Student
-                'is_read'         => false
+                'user_id' => $internship->student_id,
+                'role_id' => 1, // Student
+                'is_read' => false
             ]);
 
             return response()->json([
@@ -812,7 +847,7 @@ class InternshipController extends Controller
 
         $interns = Internship::where('company_id', $companyId)
             ->whereIn('status', [Internship::STATUS_INTERNING, 'BUSINESS_EVALUATED'])
-            ->with(['student.class'])
+            ->with(['student.studentClass'])
             ->get();
 
         return CompanyInternshipResource::collection($interns);
@@ -832,28 +867,28 @@ class InternshipController extends Controller
 
             // Bước 8: Cập nhật điểm, nhận xét và trạng thái
             $internship->update([
-                'company_grade'    => $request->company_grade,
+                'company_grade' => $request->company_grade,
                 'company_feedback' => $request->company_feedback,
-                'status'           => 'BUSINESS_EVALUATED', // Trạng thái theo đặc tả UC
-                'updated_at'       => Carbon::now()
+                'status' => 'BUSINESS_EVALUATED', // Trạng thái theo đặc tả UC
+                'updated_at' => Carbon::now()
             ]);
 
             // Bước 9: Gửi thông báo cho sinh viên
             $notification = Notification::create([
-                'title'   => 'Thông báo kết quả đánh giá từ doanh nghiệp',
+                'title' => 'Thông báo kết quả đánh giá từ doanh nghiệp',
                 'content' => "Doanh nghiệp đã hoàn tất đánh giá quá trình thực tập của bạn với điểm số: {$request->company_grade}."
             ]);
 
             UserNotification::create([
                 'notification_id' => $notification->notification_id,
-                'user_id'         => $internship->student_id,
-                'role_id'         => 1, // Student
+                'user_id' => $internship->student_id,
+                'role_id' => 1, // Student
             ]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Đánh giá sinh viên thành công (Bước 10)',
-                'data'    => new CompanyInternshipResource($internship)
+                'data' => new CompanyInternshipResource($internship)
             ]);
         });
     }
@@ -865,7 +900,7 @@ class InternshipController extends Controller
         $query = $this->applyFilters($request);
 
         // NFR-1: Tối ưu truy vấn bằng Eager Loading để đảm bảo tốc độ < 5s
-        $data = $query->with(['student.class', 'company', 'lecturer'])->get();
+        $data = $query->with(['student.studentClass', 'company', 'lecturer'])->get();
 
         return InternshipStatisticResource::collection($data);
     }
@@ -903,7 +938,8 @@ class InternshipController extends Controller
         // BR-1: Ưu tiên học kỳ hiện tại nếu không chọn học kỳ cụ thể
         if ($request->filled('semester_id')) {
             $query->where('semester_id', $request->semester_id);
-        } else {
+        }
+        else {
             $currentSemester = Semester::where('start_date', '<=', Carbon::now())
                 ->where('end_date', '>=', Carbon::now())
                 ->first();
