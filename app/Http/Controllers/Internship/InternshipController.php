@@ -56,13 +56,56 @@ use App\Http\Resources\Internship\InternshipReportResource;
 
 class InternshipController extends Controller
 {
+    /**
+     * UC 33: Lấy trạng thái thực tập hiện tại của sinh viên
+     */
+    public function getStatus()
+    {
+        $studentId = auth()->id();
+        $internship = Internship::where('student_id', $studentId)
+            ->with(['company', 'semester', 'requests'])
+            ->latest()
+            ->first();
+
+        if (!$internship) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn chưa đăng ký đợt thực tập.'
+            ], 404);
+        }
+
+        return new InternshipResource($internship);
+    }
+
+    /**
+     * UC 33: Lấy đợt đăng ký thực tập đang mở
+     */
+    public function getRegisterMilestone()
+    {
+        $milestone = Milestone::where('type', Milestone::TYPE_INTERNSHIP)
+            ->upcoming()
+            ->first();
+
+        if (!$milestone) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hiện không có đợt đăng ký thực tập nào đang mở.'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $milestone
+        ]);
+    }
+
     public function register(RegisterInternshipRequest $request)
     {
         $studentId = auth()->id();
         $milestone = Milestone::findOrFail($request->milestone_id);
 
         // 1. Ngoại lệ 3b: Kiểm tra hết hạn đăng ký
-        if (Carbon::now()->gt($milestone->deadline)) {
+        if (Carbon::now()->gt($milestone->end_date)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Đã hết hạn đăng ký thực tập.'
@@ -183,7 +226,7 @@ class InternshipController extends Controller
     {
         // BR-1: Chức năng duyệt chỉ mở sau khi đóng cổng đăng ký
         $isClosed = Milestone::where('type', Milestone::TYPE_INTERNSHIP)
-            ->where('deadline', '<', Carbon::now())
+            ->where('end_date', '<', Carbon::now())
             ->exists();
 
         if (!$isClosed) {
@@ -281,7 +324,7 @@ class InternshipController extends Controller
         $milestone = Milestone::findOrFail($request->milestone_id);
 
         // 3a & 8a1: Kiểm tra thời hạn nộp bài
-        if (Carbon::now()->gt($milestone->deadline)) {
+        if (Carbon::now()->gt($milestone->end_date)) {
             return response()->json(['message' => 'Đã hết thời gian nộp (3a).'], 400);
         }
 
