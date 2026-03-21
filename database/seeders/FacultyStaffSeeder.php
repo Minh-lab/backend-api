@@ -10,6 +10,7 @@ class FacultyStaffSeeder extends Seeder
 {
     public function run(): void
     {
+        // --- Dữ liệu gốc ---
         $rows = [
             [
                 'usercode'     => 'FS001',
@@ -48,6 +49,30 @@ class FacultyStaffSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ]));
+        }
+
+        // --- Faker: Sinh thêm 12 nhân viên văn phòng ---
+        $faker   = \Faker\Factory::create('vi_VN');
+        $genders = ['Nam', 'Nữ'];
+
+        for ($i = 4; $i <= 15; $i++) {
+            $num      = str_pad($i, 3, '0', STR_PAD_LEFT);
+            $usercode = "FS{$num}";
+            $username = "vanphong{$num}";
+            $gender   = $genders[array_rand($genders)];
+
+            DB::table('faculty_staffs')->insertOrIgnore([
+                'usercode'     => $usercode,
+                'username'     => $username,
+                'password'     => Hash::make('Staff@123'),
+                'email'        => "{$username}@tlu.edu.vn",
+                'full_name'    => $faker->name,
+                'gender'       => $gender,
+                'dob'          => $faker->dateTimeBetween('1985-01-01', '2000-12-31')->format('Y-m-d'),
+                'phone_number' => '09' . $faker->numerify('########'),
+                'created_at'   => now(),
+                'updated_at'   => now(),
+            ]);
         }
     }
 }

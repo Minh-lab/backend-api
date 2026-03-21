@@ -799,6 +799,7 @@ class CapstoneController extends Controller
      * UC 22 - BƯỚC 2: Student registers for a topic from the topic bank
      * POST /capstones/register-topic
      */
+    
     public function registerTopic(Request $request)
     {
         $validated = $request->validate([
@@ -851,6 +852,7 @@ class CapstoneController extends Controller
             ], 201);
         });
     }
+    
 
     /**
      * UC 22 - BƯỚC 1: Student proposes a new topic
@@ -1038,7 +1040,7 @@ class CapstoneController extends Controller
     private function notifyStudent($userId, $roleId, $content)
     {
         $notification = \App\Models\Notification::create([
-            'title'   => 'Thông báo hệ thống Đồ án',
+            '   title'   => 'Thông báo hệ thống Đồ án',
             'content' => $content
         ]);
 

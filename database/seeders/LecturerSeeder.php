@@ -10,6 +10,7 @@ class LecturerSeeder extends Seeder
 {
     public function run(): void
     {
+        // --- Dữ liệu gốc (giữ nguyên để test tài khoản cụ thể) ---
         $rows = [
             [
                 'usercode'     => 'GV001', 'username' => 'nguyenvana',
@@ -78,6 +79,41 @@ class LecturerSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ]));
+        }
+
+        // --- Faker: Sinh thêm 24 giảng viên ngẫu nhiên ---
+        $faker      = \Faker\Factory::create('vi_VN');
+        $genders    = ['Nam', 'Nữ'];
+        $degrees    = ['Tiến sĩ', 'Thạc sĩ', 'Giáo sư', 'Phó Giáo sư'];
+        $departments = [
+            'Khoa Công nghệ thông tin',
+            'Khoa Điện tử Viễn thông',
+            'Khoa Toán - Tin học',
+            'Khoa Khoa học Máy tính',
+        ];
+
+        for ($i = 7; $i <= 30; $i++) {
+            $num      = str_pad($i, 3, '0', STR_PAD_LEFT);
+            $usercode = "GV{$num}";
+            $username = strtolower($faker->unique()->userName);
+            $gender   = $genders[array_rand($genders)];
+
+            DB::table('lecturers')->insertOrIgnore([
+                'usercode'     => $usercode,
+                'username'     => $username,
+                'password'     => Hash::make('Lecturer@123'),
+                'email'        => "{$username}@tlu.edu.vn",
+                'full_name'    => $faker->name,
+                'gender'       => $gender,
+                'dob'          => $faker->dateTimeBetween('1965-01-01', '1990-12-31')->format('Y-m-d'),
+                'phone_number' => '09' . $faker->numerify('########'),
+                'degree'       => $degrees[array_rand($degrees)],
+                'department'   => $departments[array_rand($departments)],
+                'is_active'    => 1,
+                'first_login'  => 0,
+                'created_at'   => now(),
+                'updated_at'   => now(),
+            ]);
         }
     }
 }

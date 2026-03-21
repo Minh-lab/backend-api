@@ -10,6 +10,7 @@ class UserNotificationSeeder extends Seeder
     public function run(): void
     {
         // role_id: 3=lecturer, 4=student
+        // --- Dữ liệu gốc ---
         $rows = [
             // Thông báo 1 - gửi tất cả sinh viên
             ['notification_id' => 1, 'user_id' => 1,  'role_id' => 4, 'is_read' => 1],
@@ -47,6 +48,34 @@ class UserNotificationSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ]));
+        }
+
+        // --- Sinh thêm: Gửi thông báo 6-15 cho toàn bộ 50 sinh viên đầu ---
+        for ($notifId = 6; $notifId <= 15; $notifId++) {
+            for ($studentId = 1; $studentId <= 50; $studentId++) {
+                DB::table('user_notifications')->insertOrIgnore([
+                    'notification_id' => $notifId,
+                    'user_id'         => $studentId,
+                    'role_id'         => 4,
+                    'is_read'         => rand(0, 1),
+                    'created_at'      => now(),
+                    'updated_at'      => now(),
+                ]);
+            }
+        }
+
+        // --- Gửi một số thông báo cho giảng viên GV001-GV006 ---
+        foreach ([7, 8, 9, 11, 12] as $notifId) {
+            for ($lecturerId = 1; $lecturerId <= 6; $lecturerId++) {
+                DB::table('user_notifications')->insertOrIgnore([
+                    'notification_id' => $notifId,
+                    'user_id'         => $lecturerId,
+                    'role_id'         => 3,
+                    'is_read'         => rand(0, 1),
+                    'created_at'      => now(),
+                    'updated_at'      => now(),
+                ]);
+            }
         }
     }
 }

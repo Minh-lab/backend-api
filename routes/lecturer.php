@@ -1,5 +1,4 @@
 <?php
-
 use App\Http\Controllers\Lecturer\LecturerController;
 use App\Http\Controllers\Internship\InternshipController;
 use App\Http\Controllers\Capstone\CapstoneController;
@@ -7,6 +6,9 @@ use App\Http\Controllers\Lecturer\ProfileController;
 use App\Http\Controllers\LeaveRequestController;
 use App\Http\Controllers\Lecturer\LeaveRequestController as LecturerLeaveRequestController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Lecturer\LeaveRequestController;
+use App\Http\Controllers\Lecturer\ProfileController;
+
 
 // (Duyệt nghỉ phép - UC 48)
 Route::middleware(['auth:sanctum', 'role:vpk'])->prefix('vpk')->group(function () {

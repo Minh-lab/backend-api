@@ -9,7 +9,8 @@ class InternshipReportSeeder extends Seeder
 {
     public function run(): void
     {
-        $rows = [
+        // --- Dữ liệu gốc ---
+        $original = [
             ['internship_id' => 1, 'milestone_id' => 9, 'status' => 'APPROVED',
              'description' => 'Tháng đầu tham gia dự án website bán hàng, thực hiện các tính năng frontend với ReactJS',
              'lecturer_feedback' => 'Báo cáo đầy đủ, tiếp tục cố gắng',
@@ -40,11 +41,48 @@ class InternshipReportSeeder extends Seeder
              'submission_date' => '2025-04-14 20:00:00'],
         ];
 
-        foreach ($rows as $row) {
+        foreach ($original as $row) {
             DB::table('internship_reports')->insertOrIgnore(array_merge($row, [
                 'created_at' => now(),
                 'updated_at' => now(),
             ]));
+        }
+
+        // --- Sinh thêm báo cáo cho các internship_id 4 đến 30 ---
+        $statuses          = ['PENDING', 'APPROVED', 'REJECTED'];
+        $descriptions      = [
+            'Tham gia phát triển module quản lý người dùng và phân quyền.',
+            'Xây dựng giao diện responsive theo thiết kế Figma của team design.',
+            'Viết unit test và integration test cho các tính năng chính.',
+            'Tham gia meeting sprint planning và daily standup mỗi ngày.',
+            'Hoàn thành tích hợp API bên thứ 3 (Google Maps, Payment Gateway).',
+            'Tham gia code review và đưa ra đề xuất cải tiến kỹ thuật.',
+        ];
+        $feedbacks         = [
+            'Báo cáo đầy đủ, đúng hạn.', 'Cần bổ sung thêm thông tin về kết quả đạt được.',
+            'Xuất sắc, tiếp tục phát huy.', null,
+        ];
+        // milestone_id 9=Nộp đề cương, 10=Nộp báo cáo cuối kỳ
+        $milestoneIds = [9, 10];
+
+        for ($internshipId = 4; $internshipId <= 30; $internshipId++) {
+            $reportCount    = rand(1, 2);
+            $usedMilestones = array_slice($milestoneIds, 0, $reportCount);
+
+            foreach ($usedMilestones as $milestoneId) {
+                $status = $statuses[array_rand($statuses)];
+                DB::table('internship_reports')->insertOrIgnore([
+                    'internship_id'     => $internshipId,
+                    'milestone_id'      => $milestoneId,
+                    'status'            => $status,
+                    'description'       => $descriptions[array_rand($descriptions)],
+                    'lecturer_feedback' => $status !== 'PENDING' ? $feedbacks[array_rand($feedbacks)] : null,
+                    'file_path'         => "reports/internship/{$internshipId}/milestone{$milestoneId}.pdf",
+                    'submission_date'   => '2025-0' . rand(3, 5) . '-' . str_pad(rand(1, 28), 2, '0', STR_PAD_LEFT) . ' 10:00:00',
+                    'created_at'        => now(),
+                    'updated_at'        => now(),
+                ]);
+            }
         }
     }
 }

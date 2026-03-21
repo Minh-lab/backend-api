@@ -9,7 +9,8 @@ class CapstoneReportSeeder extends Seeder
 {
     public function run(): void
     {
-        $rows = [
+        // --- Dữ liệu gốc ---
+        $original = [
             ['capstone_id' => 1, 'milestone_id' => 2, 'status' => 'APPROVED',
              'file_path' => 'reports/capstone/1/decuong.pdf',
              'lecturer_feedback' => 'Đề cương rõ ràng, bắt đầu thực hiện được',
@@ -46,11 +47,43 @@ class CapstoneReportSeeder extends Seeder
              'submission_date' => '2025-03-30 22:00:00'],
         ];
 
-        foreach ($rows as $row) {
+        foreach ($original as $row) {
             DB::table('capstone_reports')->insertOrIgnore(array_merge($row, [
                 'created_at' => now(),
                 'updated_at' => now(),
             ]));
+        }
+
+        // --- Sinh thêm báo cáo cho capstone_id 3, 5 và các đồ án mới (6-30) ---
+        $statuses  = ['PENDING', 'APPROVED', 'REJECTED'];
+        $feedbacks = [
+            'Báo cáo đạt yêu cầu, tiếp tục phát huy.',
+            'Cần bổ sung thêm phần phân tích yêu cầu.',
+            'Tốt, nhưng cần kiểm tra lại phần testing.',
+            'Xuất sắc, đủ điều kiện bảo vệ.',
+            null,
+        ];
+        // milestone_id 2-5 là các mốc CAPSTONE theo MilestoneSeeder
+        $milestoneIds = [2, 3, 4, 5];
+
+        for ($capstoneId = 3; $capstoneId <= 30; $capstoneId++) {
+            // Mỗi đồ án nộp 1-3 báo cáo
+            $reportCount = rand(1, count($milestoneIds));
+            $usedMilestones = array_slice($milestoneIds, 0, $reportCount);
+
+            foreach ($usedMilestones as $milestoneId) {
+                $status = $statuses[array_rand($statuses)];
+                DB::table('capstone_reports')->insertOrIgnore([
+                    'capstone_id'       => $capstoneId,
+                    'milestone_id'      => $milestoneId,
+                    'status'            => $status,
+                    'file_path'         => "reports/capstone/{$capstoneId}/milestone{$milestoneId}.pdf",
+                    'lecturer_feedback' => $status !== 'PENDING' ? $feedbacks[array_rand($feedbacks)] : null,
+                    'submission_date'   => '2025-0' . rand(3, 5) . '-' . str_pad(rand(1, 28), 2, '0', STR_PAD_LEFT) . ' 10:00:00',
+                    'created_at'        => now(),
+                    'updated_at'        => now(),
+                ]);
+            }
         }
     }
 }

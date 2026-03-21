@@ -10,6 +10,7 @@ class StudentSeeder extends Seeder
 {
     public function run(): void
     {
+        // --- Dữ liệu gốc (giữ nguyên để test tài khoản cụ thể) ---
         $rows = [
             ['usercode' => '6351012001', 'username' => 'sv6351012001', 'password' => Hash::make('Student@123'),
              'email' => '6351012001@sv.tlu.edu.vn', 'full_name' => 'Nguyễn Văn Anh',
@@ -67,6 +68,36 @@ class StudentSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ]));
+        }
+
+        // --- Faker: Sinh thêm 90 sinh viên ngẫu nhiên ---
+        $faker   = \Faker\Factory::create('vi_VN');
+        $genders = ['Nam', 'Nữ'];
+
+        for ($i = 11; $i <= 100; $i++) {
+            $num      = str_pad($i, 3, '0', STR_PAD_LEFT);
+            $usercode = "6351F{$num}";
+            $username = "sv{$usercode}";
+            $classId  = rand(1, 5);
+            $gender   = $genders[array_rand($genders)];
+            $gpa      = round(rand(200, 400) / 100, 2);
+
+            DB::table('students')->insertOrIgnore([
+                'usercode'     => $usercode,
+                'username'     => $username,
+                'password'     => Hash::make('Student@123'),
+                'email'        => "{$usercode}@sv.tlu.edu.vn",
+                'full_name'    => $faker->name,
+                'gender'       => $gender,
+                'dob'          => $faker->dateTimeBetween('2001-01-01', '2004-12-31')->format('Y-m-d'),
+                'phone_number' => '09' . $faker->numerify('########'),
+                'class_id'     => $classId,
+                'gpa'          => $gpa,
+                'is_active'    => 1,
+                'first_login'  => 0,
+                'created_at'   => now(),
+                'updated_at'   => now(),
+            ]);
         }
     }
 }
