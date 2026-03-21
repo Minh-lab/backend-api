@@ -16,6 +16,7 @@ class CapstoneReviewer extends Model
         'capstone_id',
         'lecturer_id',
         'opponent_grade',
+        'opponent_feedback',
     ];
 
     protected $casts = [

@@ -16,7 +16,7 @@ class LecturerSearchResource extends JsonResource
         $maxSlots = 30; // Định mức giả định
 
         // Trạng thái tiếp nhận dựa trên việc có đang nghỉ phép hay không
-        $isOnLeave = $this->leaves()->where('status', 'LEAVE_ACTIVE')->exists();
+        $isOnLeave = $this->leaves()->where('lecturer_leaves.status', 'LEAVE_ACTIVE')->exists();
 
         return [
             'lecturer_id'   => $this->lecturer_id,

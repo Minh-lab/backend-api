@@ -3,6 +3,9 @@
 use App\Http\Controllers\Lecturer\LecturerController;
 use App\Http\Controllers\Internship\InternshipController;
 use App\Http\Controllers\Capstone\CapstoneController;
+use App\Http\Controllers\Lecturer\ProfileController;
+use App\Http\Controllers\LeaveRequestController;
+use App\Http\Controllers\Lecturer\LeaveRequestController as LecturerLeaveRequestController;
 use Illuminate\Support\Facades\Route;
 
 // (Duyệt nghỉ phép - UC 48)
@@ -18,6 +21,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
 });
 
 //UC 40
+
+
 Route::middleware(['auth:sanctum', 'role:lecturer'])->prefix('lecturer/internships')->group(function () {
     Route::get('/pending-reports', [InternshipController::class, 'getReportsToReview']); // UC 40
     Route::post('/reports/{id}/review', [InternshipController::class, 'reviewReport']);   // UC 40
@@ -115,17 +120,16 @@ Route::middleware(['auth:sanctum', 'role:lecturer'])->prefix('/lecturer/capstone
     // UC 31.1: Xem và duyệt yêu cầu hủy
     Route::get('/cancellations', [CapstoneController::class, 'getPendingCancellationsLecturer']);
     Route::post('/cancellations/{id}/review', [CapstoneController::class, 'reviewCancellationLecturer']);
-use App\Http\Controllers\Lecturer\LeaveRequestController;
-use App\Http\Controllers\Lecturer\ProfileController;
-use Illuminate\Support\Facades\Route;
+
 
 // UC6 - Chuyên môn | UC7 - Nghỉ phép (Lecturer)
+});
 Route::prefix('lecturer')
     ->middleware(['auth:sanctum', 'role:lecturer'])
     ->group(function () {
         Route::get('/expertises', [ProfileController::class , 'getExpertises']);
         Route::put('/expertises', [ProfileController::class , 'updateExpertises']);
-        Route::post('/leave-requests', [LeaveRequestController::class , 'store']);
+        Route::post('/leave-requests', [LecturerLeaveRequestController::class , 'store']);
     });
 
 // UC48 - VPK duyệt nghỉ phép
@@ -138,6 +142,4 @@ Route::prefix('vpk')
     });
 
 // UC47 - Tìm kiếm giảng viên (VPK, Admin, Student)
-Route::middleware(['auth:sanctum', 'role:faculty_staff,admin,student,lecturer,company'])->group(function () {
-    Route::get('/lecturers/search', [LecturerController::class , 'index']);
-});
+

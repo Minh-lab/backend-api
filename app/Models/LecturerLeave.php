@@ -41,11 +41,11 @@ class LecturerLeave extends Model
 
     public function scopeActive($query)
     {
-        return $query->where('status', self::STATUS_LEAVE_ACTIVE);
+        return $query->where('lecturer_leaves.status', self::STATUS_LEAVE_ACTIVE);
     }
 
     public function scopePending($query)
     {
-        return $query->where('status', self::STATUS_APPROVED_PENDING);
+        return $query->where('lecturer_leaves.status', self::STATUS_APPROVED_PENDING);
     }
 }

@@ -45,7 +45,10 @@ class InternshipReport extends Model
 
     public function scopePending($query)
     {
-        return $query->where('status', self::STATUS_PENDING);
+        return $query->whereIn('status', [
+            self::STATUS_PENDING,
+            'STATUS_PENDING',
+        ]);
     }
 
     public function scopeApproved($query)

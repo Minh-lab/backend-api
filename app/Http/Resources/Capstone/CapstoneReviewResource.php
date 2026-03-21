@@ -21,6 +21,7 @@ class CapstoneReviewResource extends JsonResource
             'topic_title'   => $capstone->topic->title ?? 'N/A',
             'expertise'     => $capstone->topic->expertise->name ?? 'N/A',
             'my_grade'      => $this->opponent_grade,
+            'feedback'      => $this->opponent_feedback,
             'status'        => $capstone->status,
             'preview_url'   => $latestReport ? asset('storage/' . $latestReport->file_path) : null,
         ];

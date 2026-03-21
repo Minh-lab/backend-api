@@ -360,7 +360,8 @@ class InternshipController extends Controller
      */
     public function getReportsToReview()
     {
-        $lecturerId = auth()->id();
+        $user = auth()->user();
+        $lecturerId = $user->lecturer_id ?? $user->getAuthIdentifier();
         $lecturer = Lecturer::findOrFail($lecturerId);
 
         // Ngoại lệ 2a: Kiểm tra trạng thái nghỉ phép
@@ -375,7 +376,10 @@ class InternshipController extends Controller
         $reports = InternshipReport::whereHas('internship', function ($q) use ($lecturerId) {
             $q->where('lecturer_id', $lecturerId);
         })
-            ->where('status', InternshipReport::STATUS_PENDING)
+            ->whereIn('status', [
+                InternshipReport::STATUS_PENDING,
+                'STATUS_PENDING',
+            ])
             ->with(['internship.student', 'milestone'])
             ->get();
 
@@ -387,7 +391,8 @@ class InternshipController extends Controller
      */
     public function reviewReport(ReviewReportRequest $request, $id)
     {
-        $lecturerId = auth()->id();
+        $user = auth()->user();
+        $lecturerId = $user->lecturer_id ?? $user->getAuthIdentifier();
 
         $report = InternshipReport::whereHas('internship', function ($q) use ($lecturerId) {
             $q->where('lecturer_id', $lecturerId);
@@ -584,7 +589,8 @@ class InternshipController extends Controller
 
     public function getPendingCancelLecturer()
     {
-        $lecturerId = auth()->id();
+        $user = auth()->user();
+        $lecturerId = $user->lecturer_id ?? $user->getAuthIdentifier();
         $lecturer = Lecturer::findOrFail($lecturerId);
 
         // BR-2: Giảng viên nghỉ phép không có quyền truy cập
@@ -605,7 +611,8 @@ class InternshipController extends Controller
     public function reviewCancelLecturer(ReviewCancelRequest $request, $id)
     {
         return DB::transaction(function () use ($request, $id) {
-            $lecturerId = auth()->id();
+            $user = auth()->user();
+            $lecturerId = $user->lecturer_id ?? $user->getAuthIdentifier();
             $cancelReq = InternshipRequest::where('type', InternshipRequest::TYPE_CANCEL_REQ)
                 ->where('status', InternshipRequest::STATUS_PENDING_TEACHER)
                 ->whereHas('internship', function ($q) use ($lecturerId) {
@@ -694,7 +701,7 @@ class InternshipController extends Controller
             $countSelected = count($internshipIds);
 
             // 6b & BR-1: Kiểm tra trạng thái nghỉ phép
-            $isOnLeave = $lecturer->leaves()->where('status', LecturerLeave::STATUS_LEAVE_ACTIVE)->exists();
+            $isOnLeave = $lecturer->leaves()->where('lecturer_leaves.status', LecturerLeave::STATUS_LEAVE_ACTIVE)->exists();
             if ($isOnLeave) {
                 return response()->json([
                     'message' => 'Không thể phân công cho giảng viên đang nghỉ phép (6b1).'
@@ -747,7 +754,8 @@ class InternshipController extends Controller
      */
     public function getStudentsForGrading()
     {
-        $lecturerId = auth()->id();
+        $user = auth()->user();
+        $lecturerId = $user->lecturer_id ?? $user->getAuthIdentifier();
         $lecturer = Lecturer::findOrFail($lecturerId);
 
         // 2a: Kiểm tra trạng thái nghỉ phép
@@ -762,7 +770,7 @@ class InternshipController extends Controller
         }
 
         $students = Internship::where('lecturer_id', $lecturerId)
-            ->whereHas('internshipReports') // BR-2: Đã nộp báo cáo
+            ->whereHas('reports') // BR-2: Đã nộp báo cáo
             ->with(['student.studentClass'])
             ->get();
 
@@ -775,7 +783,8 @@ class InternshipController extends Controller
     public function submitGrade(GradeInternshipRequest $request, $id)
     {
         return DB::transaction(function () use ($request, $id) {
-            $lecturerId = auth()->id();
+            $user = auth()->user();
+            $lecturerId = $user->lecturer_id ?? $user->getAuthIdentifier();
 
             // BR-1: Chỉ giảng viên hướng dẫn mới có quyền chấm
             $internship = Internship::where('lecturer_id', $lecturerId)->findOrFail($id);
