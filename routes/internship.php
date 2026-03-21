@@ -7,6 +7,10 @@ use Illuminate\Support\Facades\Route;
 // Chỉ dành cho Sinh viên đã đăng nhập
 Route::middleware(['auth:sanctum', 'role:student'])->prefix('internships')->group(function () {
 
+    // UC 33: Lấy đợt đăng ký thực tập đang mở
+    Route::get('/milestone', [InternshipController::class, 'getRegisterMilestone']);
+    // UC 33: Lấy trạng thái thực tập hiện tại
+    Route::get('/status', [InternshipController::class, 'getStatus']);
     // UC 33: Đăng ký đợt thực tập
     Route::post('/register', [InternshipController::class, 'register']);
     // UC 34: Đăng ký doanh nghiệp
@@ -19,6 +23,9 @@ Route::middleware(['auth:sanctum', 'role:student'])->prefix('internships')->grou
 
     // Thực hiện nộp báo cáo (Bước 6)
     Route::post('/reports/submit', [InternshipController::class, 'submitReport']);
+
+    // UC 37: Lấy danh sách doanh nghiệp đối tác
+    Route::get('/available-companies', [InternshipController::class, 'getAvailableCompanies']);
 });
 
 // Group cho Văn phòng khoa (UC 42)

@@ -12,12 +12,13 @@ class InternshipGradeResource extends JsonResource
             'internship_id'   => $this->internship_id,
             'student_code'    => $this->student->usercode ?? 'N/A',
             'student_name'    => $this->student->full_name ?? 'N/A',
-            'class_name'      => $this->student->class->class_name ?? 'N/A',
+            'class_name'      => $this->student->studentClass->class_name ?? 'N/A',
             'company_grade'   => $this->company_grade, // Điểm quá trình (từ doanh nghiệp)
             'university_grade' => $this->university_grade, // Điểm thi (từ giảng viên)
+            'university_feedback' => $this->university_feedback,
             'final_grade'     => $this->calculateFinalGrade(),
             'status'          => $this->status,
-            'report_preview'  => $this->internshipReports()->latest()->first()->file_path ?? null,
+            'report_preview'  => $this->reports()->latest()->first()->file_path ?? null,
         ];
     }
 

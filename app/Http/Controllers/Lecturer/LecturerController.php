@@ -50,12 +50,12 @@ class LecturerController extends Controller
             if ($request->acceptance_status === 'busy') {
                 // Đang nghỉ phép hoặc đã hết slot
                 $query->whereHas('leaves', function ($q) {
-                    $q->where('status', 'LEAVE_ACTIVE');
+                    $q->where('lecturer_leaves.status', 'LEAVE_ACTIVE');
                 })->orHavingRaw('(internships_count + capstones_count) >= 30');
             } else {
                 // Không nghỉ phép VÀ còn slot
                 $query->whereDoesntHave('leaves', function ($q) {
-                    $q->where('status', 'LEAVE_ACTIVE');
+                    $q->where('lecturer_leaves.status', 'LEAVE_ACTIVE');
                 })->havingRaw('(internships_count + capstones_count) < 30');
             }
         }

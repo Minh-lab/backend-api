@@ -10,7 +10,7 @@ class LecturerSlotResource extends JsonResource
     public function toArray($request): array
     {
         // Kiểm tra trạng thái nghỉ phép (BR-1)
-        $isOnLeave = $this->leaves()->where('status', LecturerLeave::STATUS_LEAVE_ACTIVE)->exists();
+        $isOnLeave = $this->leaves()->where('lecturer_leaves.status', LecturerLeave::STATUS_LEAVE_ACTIVE)->exists();
 
         // Giả sử định mức tối đa là 30 sinh viên/giảng viên (có thể cấu hình trong DB)
         $maxSlots = 30;

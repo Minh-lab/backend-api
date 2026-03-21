@@ -56,13 +56,56 @@ use App\Http\Resources\Internship\InternshipReportResource;
 
 class InternshipController extends Controller
 {
+    /**
+     * UC 33: Lấy trạng thái thực tập hiện tại của sinh viên
+     */
+    public function getStatus()
+    {
+        $studentId = auth()->id();
+        $internship = Internship::where('student_id', $studentId)
+            ->with(['company', 'semester', 'requests'])
+            ->latest()
+            ->first();
+
+        if (!$internship) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn chưa đăng ký đợt thực tập.'
+            ], 404);
+        }
+
+        return new InternshipResource($internship);
+    }
+
+    /**
+     * UC 33: Lấy đợt đăng ký thực tập đang mở
+     */
+    public function getRegisterMilestone()
+    {
+        $milestone = Milestone::where('type', Milestone::TYPE_INTERNSHIP)
+            ->upcoming()
+            ->first();
+
+        if (!$milestone) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hiện không có đợt đăng ký thực tập nào đang mở.'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $milestone
+        ]);
+    }
+
     public function register(RegisterInternshipRequest $request)
     {
         $studentId = auth()->id();
         $milestone = Milestone::findOrFail($request->milestone_id);
 
         // 1. Ngoại lệ 3b: Kiểm tra hết hạn đăng ký
-        if (Carbon::now()->gt($milestone->deadline)) {
+        if (Carbon::now()->gt($milestone->end_date)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Đã hết hạn đăng ký thực tập.'
@@ -183,7 +226,7 @@ class InternshipController extends Controller
     {
         // BR-1: Chức năng duyệt chỉ mở sau khi đóng cổng đăng ký
         $isClosed = Milestone::where('type', Milestone::TYPE_INTERNSHIP)
-            ->where('deadline', '<', Carbon::now())
+            ->where('end_date', '<', Carbon::now())
             ->exists();
 
         if (!$isClosed) {
@@ -281,7 +324,7 @@ class InternshipController extends Controller
         $milestone = Milestone::findOrFail($request->milestone_id);
 
         // 3a & 8a1: Kiểm tra thời hạn nộp bài
-        if (Carbon::now()->gt($milestone->deadline)) {
+        if (Carbon::now()->gt($milestone->end_date)) {
             return response()->json(['message' => 'Đã hết thời gian nộp (3a).'], 400);
         }
 
@@ -317,7 +360,8 @@ class InternshipController extends Controller
      */
     public function getReportsToReview()
     {
-        $lecturerId = auth()->id();
+        $user = auth()->user();
+        $lecturerId = $user->lecturer_id ?? $user->getAuthIdentifier();
         $lecturer = Lecturer::findOrFail($lecturerId);
 
         // Ngoại lệ 2a: Kiểm tra trạng thái nghỉ phép
@@ -332,7 +376,10 @@ class InternshipController extends Controller
         $reports = InternshipReport::whereHas('internship', function ($q) use ($lecturerId) {
             $q->where('lecturer_id', $lecturerId);
         })
-            ->where('status', InternshipReport::STATUS_PENDING)
+            ->whereIn('status', [
+                InternshipReport::STATUS_PENDING,
+                'STATUS_PENDING',
+            ])
             ->with(['internship.student', 'milestone'])
             ->get();
 
@@ -344,7 +391,8 @@ class InternshipController extends Controller
      */
     public function reviewReport(ReviewReportRequest $request, $id)
     {
-        $lecturerId = auth()->id();
+        $user = auth()->user();
+        $lecturerId = $user->lecturer_id ?? $user->getAuthIdentifier();
 
         $report = InternshipReport::whereHas('internship', function ($q) use ($lecturerId) {
             $q->where('lecturer_id', $lecturerId);
@@ -541,7 +589,8 @@ class InternshipController extends Controller
 
     public function getPendingCancelLecturer()
     {
-        $lecturerId = auth()->id();
+        $user = auth()->user();
+        $lecturerId = $user->lecturer_id ?? $user->getAuthIdentifier();
         $lecturer = Lecturer::findOrFail($lecturerId);
 
         // BR-2: Giảng viên nghỉ phép không có quyền truy cập
@@ -562,7 +611,8 @@ class InternshipController extends Controller
     public function reviewCancelLecturer(ReviewCancelRequest $request, $id)
     {
         return DB::transaction(function () use ($request, $id) {
-            $lecturerId = auth()->id();
+            $user = auth()->user();
+            $lecturerId = $user->lecturer_id ?? $user->getAuthIdentifier();
             $cancelReq = InternshipRequest::where('type', InternshipRequest::TYPE_CANCEL_REQ)
                 ->where('status', InternshipRequest::STATUS_PENDING_TEACHER)
                 ->whereHas('internship', function ($q) use ($lecturerId) {
@@ -651,7 +701,7 @@ class InternshipController extends Controller
             $countSelected = count($internshipIds);
 
             // 6b & BR-1: Kiểm tra trạng thái nghỉ phép
-            $isOnLeave = $lecturer->leaves()->where('status', LecturerLeave::STATUS_LEAVE_ACTIVE)->exists();
+            $isOnLeave = $lecturer->leaves()->where('lecturer_leaves.status', LecturerLeave::STATUS_LEAVE_ACTIVE)->exists();
             if ($isOnLeave) {
                 return response()->json([
                     'message' => 'Không thể phân công cho giảng viên đang nghỉ phép (6b1).'
@@ -704,7 +754,8 @@ class InternshipController extends Controller
      */
     public function getStudentsForGrading()
     {
-        $lecturerId = auth()->id();
+        $user = auth()->user();
+        $lecturerId = $user->lecturer_id ?? $user->getAuthIdentifier();
         $lecturer = Lecturer::findOrFail($lecturerId);
 
         // 2a: Kiểm tra trạng thái nghỉ phép
@@ -719,7 +770,7 @@ class InternshipController extends Controller
         }
 
         $students = Internship::where('lecturer_id', $lecturerId)
-            ->whereHas('internshipReports') // BR-2: Đã nộp báo cáo
+            ->whereHas('reports') // BR-2: Đã nộp báo cáo
             ->with(['student.studentClass'])
             ->get();
 
@@ -732,7 +783,8 @@ class InternshipController extends Controller
     public function submitGrade(GradeInternshipRequest $request, $id)
     {
         return DB::transaction(function () use ($request, $id) {
-            $lecturerId = auth()->id();
+            $user = auth()->user();
+            $lecturerId = $user->lecturer_id ?? $user->getAuthIdentifier();
 
             // BR-1: Chỉ giảng viên hướng dẫn mới có quyền chấm
             $internship = Internship::where('lecturer_id', $lecturerId)->findOrFail($id);

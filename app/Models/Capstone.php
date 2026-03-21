@@ -16,6 +16,7 @@ class Capstone extends Model
         'semester_id',
         'status',
         'instructor_grade',
+        'instructor_feedback',
         'council_grade',
         'defense_order',
     ];

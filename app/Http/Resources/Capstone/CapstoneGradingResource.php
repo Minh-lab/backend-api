@@ -19,6 +19,7 @@ class CapstoneGradingResource extends JsonResource
             'topic_title'   => $this->topic->title ?? 'N/A',
             'expertise'     => $this->topic->expertise->name ?? 'N/A',
             'current_grade' => $this->instructor_grade,
+            'feedback'      => $this->instructor_feedback,
             'status'        => $this->status,
             // Hỗ trợ Preview báo cáo cuối cùng
             'preview_url'   => $latestReport && $latestReport->file_path

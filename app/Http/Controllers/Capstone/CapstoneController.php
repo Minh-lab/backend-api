@@ -16,19 +16,17 @@ use App\Http\Resources\Capstone\CapstoneReportDetailResource;
 use App\Http\Requests\Capstone\SubmitCapstoneGradeRequest;
 use App\Http\Resources\Capstone\CapstoneGradingResource;
 use App\Http\Requests\Capstone\SubmitReviewGradeRequest;
+use App\Http\Requests\Capstone\ReviewCancellationRequest;
 use App\Http\Resources\Capstone\CapstoneReviewResource;
 use App\Http\Requests\Capstone\AssignSupervisorRequest;
 use App\Http\Resources\Capstone\LecturerSlotResource;
 use App\Http\Resources\Capstone\CapstoneCancellationResource;
-use Illuminate\Http\Request;
 use App\Http\Resources\Capstone\CapstoneStatisticsResource;
-// use App\Models\CapstoneRequest;
-// use App\Models\Capstone;
+use App\Models\Semester;
 use App\Models\Student;
 use App\Models\Topic;
 use App\Http\Resources\CapstoneResource;
-// use Illuminate\Http\Request;
-// use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class CapstoneController extends Controller
@@ -57,7 +55,10 @@ class CapstoneController extends Controller
         }
 
         $requests = CapstoneRequest::where('lecturer_id', $lecturerId)
-            ->where('type', CapstoneRequest::TYPE_LECTURER_REG)
+            ->whereIn('type', [
+                CapstoneRequest::TYPE_LECTURER_REG,
+                CapstoneRequest::TYPE_TOPIC_BANK,
+            ])
             ->where('status', CapstoneRequest::STATUS_PENDING_TEACHER)
             ->orderBy('created_at', 'asc')
             ->with(['capstone.student.studentClass'])
@@ -74,7 +75,14 @@ class CapstoneController extends Controller
         return DB::transaction(function () use ($request, $id) {
             $lecturerId = auth()->id();
             $lecturer = Lecturer::findOrFail($lecturerId);
-            $capReq = CapstoneRequest::where('lecturer_id', $lecturerId)->findOrFail($id);
+            $capReq = CapstoneRequest::where('lecturer_id', $lecturerId)
+                ->whereIn('type', [
+                    CapstoneRequest::TYPE_LECTURER_REG,
+                    CapstoneRequest::TYPE_TOPIC_BANK,
+                ])
+                ->findOrFail($id);
+
+            $feedback = trim((string) $request->input('feedback', ''));
 
             if ($request->action === 'APPROVE') {
                 // 5a. Kiểm tra giới hạn slot (BR-2: Giả định 30)
@@ -84,7 +92,10 @@ class CapstoneController extends Controller
                 }
 
                 // Bước 6: Cập nhật giảng viên vào đồ án & Trạng thái yêu cầu
-                $capReq->update(['status' => CapstoneRequest::STATUS_APPROVED]);
+                $capReq->update([
+                    'status' => CapstoneRequest::STATUS_APPROVED,
+                    'lecturer_feedback' => $feedback !== '' ? $feedback : null
+                ]);
                 $capReq->capstone->update([
                     'lecturer_id' => $lecturerId,
                     'status'      => Capstone::STATUS_LECTURER_APPROVED
@@ -95,9 +106,13 @@ class CapstoneController extends Controller
                 // 4a. Từ chối
                 $capReq->update([
                     'status' => CapstoneRequest::STATUS_REJECTED,
-                    'lecturer_feedback' => $request->feedback
+                    'lecturer_feedback' => $feedback !== '' ? $feedback : null
                 ]);
                 $notifyMsg = "Giảng viên {$lecturer->full_name} đã từ chối yêu cầu hướng dẫn đồ án.";
+            }
+
+            if ($feedback !== '') {
+                $notifyMsg .= " Lời nhắn: {$feedback}";
             }
 
             // Bước 8: Gửi thông báo cho sinh viên
@@ -189,7 +204,8 @@ class CapstoneController extends Controller
      */
     public function getPendingTopicsLecturer()
     {
-        $lecturerId = auth()->id();
+        $user = auth()->user();
+        $lecturerId = $user->lecturer_id ?? $user->getAuthIdentifier();
         $lecturer = Lecturer::findOrFail($lecturerId);
 
         if ($lecturer->leaves()->where('lecturer_leaves.status', LecturerLeave::STATUS_LEAVE_ACTIVE)->exists()) {
@@ -219,12 +235,21 @@ class CapstoneController extends Controller
     public function reviewTopicLecturer(ReviewTopicRequest $request, $id)
     {
         return DB::transaction(function () use ($request, $id) {
-            $lecturerId = auth()->id();
-            $capReq = CapstoneRequest::where('status', CapstoneRequest::STATUS_PENDING_TEACHER)->findOrFail($id);
+            $user = auth()->user();
+            $lecturerId = $user->lecturer_id ?? $user->getAuthIdentifier();
+            $capReq = CapstoneRequest::where('type', CapstoneRequest::TYPE_TOPIC_PROP)
+                ->where('status', CapstoneRequest::STATUS_PENDING_TEACHER)
+                ->whereHas('capstone', function ($query) use ($lecturerId) {
+                    $query->where('lecturer_id', $lecturerId);
+                })
+                ->findOrFail($id);
 
             if ($request->status === 'APPROVED') {
                 // Bước 8: Chuyển trạng thái chờ VPK duyệt
-                $capReq->update(['status' => CapstoneRequest::STATUS_PENDING_FACULTY]);
+                $capReq->update([
+                    'status' => CapstoneRequest::STATUS_PENDING_FACULTY,
+                    'lecturer_feedback' => $request->feedback,
+                ]);
                 $msg = "Đề tài của bạn đã được Giảng viên duyệt và đang chờ Văn phòng khoa phê duyệt cuối cùng.";
             } else {
                 // 6a: Từ chối
@@ -235,7 +260,7 @@ class CapstoneController extends Controller
                 $msg = "Đề tài của bạn đã bị Giảng viên từ chối.";
             }
 
-            $this->notifyStudent($capReq->capstone->student_id, $msg);
+            $this->notifyStudent($capReq->capstone->student_id, 1, $msg);
             return response()->json(['success' => true, 'message' => 'Xử lý thành công.']);
         });
     }
@@ -436,7 +461,8 @@ class CapstoneController extends Controller
      */
     public function getReviewingList()
     {
-        $lecturerId = auth()->id();
+        $user = auth()->user();
+        $lecturerId = $user->lecturer_id ?? $user->getAuthIdentifier();
         $lecturer = Lecturer::findOrFail($lecturerId);
 
         // 2a. Ngoại lệ: Nghỉ phép
@@ -464,7 +490,8 @@ class CapstoneController extends Controller
     public function submitReviewGrade(SubmitReviewGradeRequest $request, $capstoneId)
     {
         return DB::transaction(function () use ($request, $capstoneId) {
-            $lecturerId = auth()->id();
+            $user = auth()->user();
+            $lecturerId = $user->lecturer_id ?? $user->getAuthIdentifier();
 
             // BR-1: Kiểm tra quyền phản biện
             $reviewRecord = CapstoneReviewer::where('capstone_id', $capstoneId)
@@ -479,6 +506,7 @@ class CapstoneController extends Controller
             // Bước 9: Lưu điểm vào bảng capstone_reviewers
             $reviewRecord->update([
                 'opponent_grade' => $request->grade,
+                'opponent_feedback' => $request->feedback,
             ]);
 
             // Bước 10: Kiểm tra nếu tất cả GV phản biện đã chấm xong
@@ -498,10 +526,10 @@ class CapstoneController extends Controller
 
                 // Bước 12: Gửi thông báo kết quả cuối cùng cho SV
                 $resultText = ($avgGrade >= 5.5) ? "Đạt điều kiện bảo vệ" : "Trượt phản biện";
-                $this->notifyStudent($capstone->student_id, "Kết quả phản biện đồ án: {$resultText}. Điểm trung bình: {$avgGrade}");
+                $this->notifyStudent($capstone->student_id, 1, "Kết quả phản biện đồ án: {$resultText}. Điểm trung bình: {$avgGrade}");
             } else {
                 // Nếu chưa đủ người chấm, chỉ thông báo là đã ghi nhận điểm của GV này
-                $this->notifyStudent($capstone->student_id, "Giảng viên phản biện đã cập nhật điểm đánh giá cho đồ án của bạn.");
+                $this->notifyStudent($capstone->student_id, 1, "Giảng viên phản biện đã cập nhật điểm đánh giá cho đồ án của bạn.");
             }
 
             return response()->json(['success' => true, 'message' => 'Lưu điểm phản biện thành công.']);
@@ -677,7 +705,8 @@ class CapstoneController extends Controller
      */
     public function getPendingCancellationsLecturer()
     {
-        $lecturerId = auth()->id();
+        $user = auth()->user();
+        $lecturerId = $user->lecturer_id ?? $user->getAuthIdentifier();
         $lecturer = Lecturer::findOrFail($lecturerId);
 
         // Kiểm tra trạng thái nghỉ phép (Ngoại lệ 2a)
@@ -693,21 +722,41 @@ class CapstoneController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $list
+            'data' => $list->map(function ($capstone) {
+                return [
+                    'request_id' => $capstone->capstone_id,
+                    'capstone_id' => $capstone->capstone_id,
+                    'student_code' => $capstone->student->usercode ?? 'N/A',
+                    'student_name' => $capstone->student->full_name ?? 'N/A',
+                    'class_name' => $capstone->student->studentClass->class_name ?? 'N/A',
+                    'topic_title' => $capstone->topic->title ?? 'N/A',
+                    'reason' => 'Sinh viên yêu cầu hủy đồ án',
+                    'status' => $capstone->status,
+                    'created_at' => optional($capstone->updated_at)->format('Y-m-d H:i:s'),
+                    'topic' => $capstone->topic ? [
+                        'topic_id' => $capstone->topic->topic_id,
+                        'title' => $capstone->topic->title,
+                        'description' => $capstone->topic->description,
+                        'technologies' => $capstone->topic->technologies,
+                    ] : null,
+                ];
+            })
         ]);
     }
 
     /**
      * Giảng viên Duyệt hoặc Từ chối yêu cầu hủy
      */
-    public function reviewCancellationLecturer(Request $request, $id)
+    public function reviewCancellationLecturer(ReviewCancellationRequest $request, $id)
     {
         return DB::transaction(function () use ($request, $id) {
-            $capstone = Capstone::where('lecturer_id', auth()->id())
+            $user = auth()->user();
+            $lecturerId = $user->lecturer_id ?? $user->getAuthIdentifier();
+            $capstone = Capstone::where('lecturer_id', $lecturerId)
                 ->where('status', 'PENDING_CANCEL')
                 ->findOrFail($id);
 
-            if ($request->action === 'APPROVE') {
+            if ($request->status === 'APPROVED') {
                 // Duyệt: Chuyển sang trạng thái chờ VPK duyệt hủy
                 $capstone->update(['status' => 'PENDING_FACULTY_CANCEL']);
 
@@ -737,7 +786,13 @@ class CapstoneController extends Controller
     public function getPendingCancellationsVPK()
     {
         $list = Capstone::where('status', 'PENDING_FACULTY_CANCEL')
-            ->with(['student.studentClass', 'topic', 'lecturer']);
+            ->with(['student.studentClass', 'topic', 'lecturer'])
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => CapstoneCancellationResource::collection($list),
+        ]);
     }
 
     /**
@@ -888,27 +943,7 @@ class CapstoneController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $requests->map(function ($request) {
-                return [
-                    'capstone_request_id' => $request->capstone_request_id,
-                    'capstone_id' => $request->capstone_id,
-                    'topic_id' => $request->topic_id,
-                    'type' => $request->type,
-                    'status' => $request->status,
-                    'topic' => $request->topic ? [
-                        'topic_id' => $request->topic->topic_id,
-                        'title' => $request->topic->title,
-                        'description' => $request->topic->description,
-                        'technologies' => $request->topic->technologies,
-                    ] : null,
-                    'lecturer' => $request->lecturer ? [
-                        'lecturer_id' => $request->lecturer->lecturer_id,
-                        'full_name' => $request->lecturer->full_name,
-                    ] : null,
-                    'created_at' => $request->created_at,
-                ];
-            }),
-
+            'data' => $requests
         ]);
     }
 
@@ -1015,8 +1050,6 @@ class CapstoneController extends Controller
             'role_id'         => $roleId // Sử dụng biến $roleId truyền vào
         ]);
     }
-
-           
     /**
      * UC 22 - Get student's capstone status
      * GET /capstones/my-status
@@ -1065,3 +1098,4 @@ class CapstoneController extends Controller
         ]);
     }
 }
+

@@ -17,8 +17,11 @@ class ProposedTopicResource extends JsonResource
             'student_code' => $student->usercode ?? 'N/A',
             'student_name' => $student->full_name ?? 'N/A',
             'class_name'   => $student->studentClass->class_name ?? 'N/A',
-            'topic_title'  => $proposedTopic->title ?? ($this->topic->title ?? 'N/A'),
-            'description'  => $proposedTopic->description ?? 'N/A',
+            'topic_title'  => $proposedTopic->proposed_title ?? ($this->topic->title ?? 'N/A'),
+            'technologies' => $proposedTopic->technologies ?? ($this->topic->technologies ?? null),
+            'description'  => $proposedTopic->proposed_description ?? 'N/A',
+            'student_message' => $this->student_message,
+            'lecturer_feedback' => $this->lecturer_feedback,
             'status'       => $this->status,
             'created_at'   => $this->created_at->format('Y-m-d H:i:s'),
         ];

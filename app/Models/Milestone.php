@@ -23,24 +23,24 @@ class Milestone extends Model
     ];
 
     // Các loại milestone
-    const TYPE_CAPSTONE    = 'CAPSTONE';
-    const TYPE_INTERNSHIP  = 'INTERNSHIP';
+    const TYPE_CAPSTONE = 'CAPSTONE';
+    const TYPE_INTERNSHIP = 'INTERNSHIP';
 
-  //relationships
+    //relationships
 
     public function semester()
     {
-        return $this->belongsTo(Semester::class, 'semester_id', 'semester_id');
+        return $this->belongsTo(Semester::class , 'semester_id', 'semester_id');
     }
 
     public function capstoneReports()
     {
-        return $this->hasMany(CapstoneReport::class, 'milestone_id', 'milestone_id');
+        return $this->hasMany(CapstoneReport::class , 'milestone_id', 'milestone_id');
     }
 
     public function internshipReports()
     {
-        return $this->hasMany(InternshipReport::class, 'milestone_id', 'milestone_id');
+        return $this->hasMany(InternshipReport::class , 'milestone_id', 'milestone_id');
     }
 
 
@@ -56,6 +56,6 @@ class Milestone extends Model
 
     public function scopeUpcoming($query)
     {
-        return $query->where('deadline', '>', now());
+        return $query->where('end_date', '>', now());
     }
 }

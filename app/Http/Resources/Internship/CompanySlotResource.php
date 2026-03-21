@@ -13,12 +13,15 @@ class CompanySlotResource extends JsonResource
         $currentInterns = $this->internships()->count();
 
         return [
-            'company_id'   => $this->company_id,
-            'tax_code'     => $this->usercode,
-            'name'         => $this->name,
+            'company_id' => $this->company_id,
+            'tax_code' => $this->usercode,
+            'name' => $this->name,
+            'email' => $this->email,
+            'address' => $this->address,
+            'website' => $this->website,
             'current_slots' => $currentInterns,
-            'max_slots'    => $maxSlots,
-            'available'    => $maxSlots - $currentInterns,
+            'max_slots' => $maxSlots,
+            'available' => $maxSlots - $currentInterns,
         ];
     }
 }
