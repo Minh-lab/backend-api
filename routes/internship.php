@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Internship\InternshipController;
+use App\Http\Controllers\Capstone\CapstoneController;
 use Illuminate\Support\Facades\Route;
 
 // Chỉ dành cho Sinh viên đã đăng nhập

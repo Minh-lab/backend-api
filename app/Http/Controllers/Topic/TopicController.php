@@ -20,13 +20,13 @@ class TopicController extends Controller
     // GET /topics?keyword=&technology=&description=&expertise_id=&page=&per_page=
     public function index(Request $request)
     {
-        $keyword     = trim($request->query('keyword', ''));
-        $technology  = trim($request->query('technology', ''));
+        $keyword = trim($request->query('keyword', ''));
+        $technology = trim($request->query('technology', ''));
         $description = trim($request->query('description', ''));
         $expertiseId = $request->query('expertise_id');
-        $perPage     = max(1, min((int) $request->query('per_page', 10), 100));
+        $perPage = max(1, min((int)$request->query('per_page', 10), 100));
 
-        $query = Topic::query();
+        $query = Topic::with('expertise')->select('topic_id', 'title', 'technologies', 'description', 'expertise_id', 'created_at');
 
         // Filter by current user if they're accessing via /lecturer route
         // Lecturers only see their own topics
@@ -66,11 +66,11 @@ class TopicController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => TopicResource::collection($topics->items()),
-            'meta'    => [
-                'total'     => $topics->total(),
-                'page'      => $topics->currentPage(),
-                'per_page'  => $topics->perPage(),
+            'data' => TopicResource::collection($topics->items()),
+            'meta' => [
+                'total' => $topics->total(),
+                'page' => $topics->currentPage(),
+                'per_page' => $topics->perPage(),
                 'last_page' => $topics->lastPage(),
             ]
         ]);
@@ -87,13 +87,14 @@ class TopicController extends Controller
         if ($user && get_class($user) === \App\Models\Lecturer::class) {
             $data['lecturer_id'] = $user->lecturer_id;
             $data['faculty_staff_id'] = null;
-        } else if ($user && get_class($user) === \App\Models\FacultyStaff::class) {
+        }
+        else if ($user && get_class($user) === \App\Models\FacultyStaff::class) {
             $data['faculty_staff_id'] = $user->faculty_staff_id;
             $data['lecturer_id'] = null;
         }
 
         $topic = Topic::create($data);
-        
+
         // Load relationships
         $topic->load(['expertise', 'lecturer', 'facultyStaff']);
 
@@ -123,7 +124,7 @@ class TopicController extends Controller
         }
 
         $topic->update($data);
-        
+
         // Load relationships
         $topic->load(['expertise', 'lecturer', 'facultyStaff']);
 

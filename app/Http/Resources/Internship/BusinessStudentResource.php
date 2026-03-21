@@ -15,6 +15,7 @@ class BusinessStudentResource extends JsonResource
             'class_name'    => $this->student->class->class_name ?? 'N/A',
             'position'      => $this->position,
             'status'        => $this->status,
+            'created_at'    => $this->created_at ? $this->created_at->format('d/m/Y H:i') : 'N/A',
         ];
     }
 }
