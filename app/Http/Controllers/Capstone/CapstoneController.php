@@ -22,13 +22,13 @@ use App\Http\Resources\Capstone\LecturerSlotResource;
 use App\Http\Resources\Capstone\CapstoneCancellationResource;
 use Illuminate\Http\Request;
 use App\Http\Resources\Capstone\CapstoneStatisticsResource;
-use App\Models\CapstoneRequest;
-use App\Models\Capstone;
+// use App\Models\CapstoneRequest;
+// use App\Models\Capstone;
 use App\Models\Student;
 use App\Models\Topic;
 use App\Http\Resources\CapstoneResource;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+// use Illuminate\Http\Request;
+// use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class CapstoneController extends Controller
@@ -737,12 +737,14 @@ class CapstoneController extends Controller
     public function getPendingCancellationsVPK()
     {
         $list = Capstone::where('status', 'PENDING_FACULTY_CANCEL')
-            ->with(['student.studentClass', 'topic', 'lecturer'])
+            ->with(['student.studentClass', 'topic', 'lecturer']);
+    }
 
     /**
      * UC 22 - BƯỚC 2: Student registers for a topic from the topic bank
      * POST /capstones/register-topic
      */
+    
     public function registerTopic(Request $request)
     {
         $validated = $request->validate([
@@ -795,6 +797,7 @@ class CapstoneController extends Controller
             ], 201);
         });
     }
+    
 
     /**
      * UC 22 - BƯỚC 1: Student proposes a new topic
@@ -885,7 +888,27 @@ class CapstoneController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $list
+            'data' => $requests->map(function ($request) {
+                return [
+                    'capstone_request_id' => $request->capstone_request_id,
+                    'capstone_id' => $request->capstone_id,
+                    'topic_id' => $request->topic_id,
+                    'type' => $request->type,
+                    'status' => $request->status,
+                    'topic' => $request->topic ? [
+                        'topic_id' => $request->topic->topic_id,
+                        'title' => $request->topic->title,
+                        'description' => $request->topic->description,
+                        'technologies' => $request->topic->technologies,
+                    ] : null,
+                    'lecturer' => $request->lecturer ? [
+                        'lecturer_id' => $request->lecturer->lecturer_id,
+                        'full_name' => $request->lecturer->full_name,
+                    ] : null,
+                    'created_at' => $request->created_at,
+                ];
+            }),
+
         ]);
     }
 
@@ -982,7 +1005,7 @@ class CapstoneController extends Controller
     private function notifyStudent($userId, $roleId, $content)
     {
         $notification = \App\Models\Notification::create([
-            'title'   => 'Thông báo hệ thống Đồ án',
+            '   title'   => 'Thông báo hệ thống Đồ án',
             'content' => $content
         ]);
 
@@ -992,30 +1015,8 @@ class CapstoneController extends Controller
             'role_id'         => $roleId // Sử dụng biến $roleId truyền vào
         ]);
     }
-}
-            'data' => $requests->map(function ($request) {
-                return [
-                    'capstone_request_id' => $request->capstone_request_id,
-                    'capstone_id' => $request->capstone_id,
-                    'topic_id' => $request->topic_id,
-                    'type' => $request->type,
-                    'status' => $request->status,
-                    'topic' => $request->topic ? [
-                        'topic_id' => $request->topic->topic_id,
-                        'title' => $request->topic->title,
-                        'description' => $request->topic->description,
-                        'technologies' => $request->topic->technologies,
-                    ] : null,
-                    'lecturer' => $request->lecturer ? [
-                        'lecturer_id' => $request->lecturer->lecturer_id,
-                        'full_name' => $request->lecturer->full_name,
-                    ] : null,
-                    'created_at' => $request->created_at,
-                ];
-            }),
-        ]);
-    }
 
+           
     /**
      * UC 22 - Get student's capstone status
      * GET /capstones/my-status

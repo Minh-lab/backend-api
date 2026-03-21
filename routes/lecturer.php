@@ -1,9 +1,11 @@
 <?php
-
 use App\Http\Controllers\Lecturer\LecturerController;
 use App\Http\Controllers\Internship\InternshipController;
 use App\Http\Controllers\Capstone\CapstoneController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Lecturer\LeaveRequestController;
+use App\Http\Controllers\Lecturer\ProfileController;
+
 
 // (Duyệt nghỉ phép - UC 48)
 Route::middleware(['auth:sanctum', 'role:vpk'])->prefix('vpk')->group(function () {
@@ -115,10 +117,7 @@ Route::middleware(['auth:sanctum', 'role:lecturer'])->prefix('/lecturer/capstone
     // UC 31.1: Xem và duyệt yêu cầu hủy
     Route::get('/cancellations', [CapstoneController::class, 'getPendingCancellationsLecturer']);
     Route::post('/cancellations/{id}/review', [CapstoneController::class, 'reviewCancellationLecturer']);
-use App\Http\Controllers\Lecturer\LeaveRequestController;
-use App\Http\Controllers\Lecturer\ProfileController;
-use Illuminate\Support\Facades\Route;
-
+});
 // UC6 - Chuyên môn | UC7 - Nghỉ phép (Lecturer)
 Route::prefix('lecturer')
     ->middleware(['auth:sanctum', 'role:lecturer'])
