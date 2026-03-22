@@ -19,17 +19,18 @@ class CapstoneRequestController extends Controller
     public function registerCapstone(Request $request)
     {
         $request->validate([
-            'topic_id'   => 'required|exists:topics,topic_id',
-            'student_id' => 'required|exists:students,student_id',
+            'topic_id'    => 'required|exists:topics,topic_id',
+            'student_id'  => 'required|exists:students,student_id',
+            'semester_id' => 'required|exists:semesters,semester_id',
         ]);
 
         $capstone = Capstone::create([
-            'topic_id'   => $request->topic_id,
-            'student_id' => $request->student_id,
-            'status'     => Capstone::STATUS_INITIALIZED,
+            'topic_id'    => $request->topic_id,
+            'student_id'  => $request->student_id,
+            'semester_id' => $request->semester_id,
+            'status'      => Capstone::STATUS_INITIALIZED,
         ]);
 
-        // Tạo request mới
         $capstoneRequest = CapstoneRequest::create([
             'capstone_id' => $capstone->capstone_id,
             'type'        => CapstoneRequest::TYPE_LECTURER_REG,
@@ -38,7 +39,7 @@ class CapstoneRequestController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => [
+            'data'    => [
                 'capstone'         => $capstone,
                 'capstone_request' => $capstoneRequest,
             ]
@@ -51,6 +52,7 @@ class CapstoneRequestController extends Controller
     {
         $validated = $request->validate([
             'capstone_id'     => 'required|exists:capstones,capstone_id',
+            'student_id'      => 'required|exists:students,student_id',
             'lecturer_id'     => 'required|exists:lecturers,lecturer_id',
             'student_message' => 'nullable|string|max:1000',
             'file'            => 'nullable|file|mimes:pdf,doc,docx|max:10240',
@@ -58,7 +60,7 @@ class CapstoneRequestController extends Controller
 
         // Lấy capstone của sinh viên
         $capstone = Capstone::where('capstone_id', $validated['capstone_id'])
-            ->where('student_id', '1')
+            ->where('student_id', $validated['student_id'])
             ->firstOrFail();
 
         // Kiểm tra sinh viên có GVHD chưa
@@ -69,28 +71,23 @@ class CapstoneRequestController extends Controller
 
         if ($hasLecturer) {
             return response()->json([
+                'success' => false,
                 'message' => 'Bạn đã đăng ký giảng viên hướng dẫn đồ án.',
             ], 422);
         }
 
-        // Kiểm tra giảng viên có được đăng ký không
+        // Kiểm tra giảng viên có khả dụng không
         $lecturer = Lecturer::where('lecturer_id', $validated['lecturer_id'])
             ->where('is_active', true)
+            ->where('is_on_leave', false)
             ->first();
 
         if (!$lecturer) {
             return response()->json([
-                'message' => 'Giảng viên không còn khả dụng, vui lòng chọn giảng viên khác.',
+                'success' => false,
+                'message' => 'Giảng viên không khả dụng, vui lòng chọn giảng viên khác.',
             ], 422);
         }
-
-        // Kiểm tra giảng viên có đang nghỉ phép không
-        if ($lecturer->is_on_leave) {
-            return response()->json([
-                'message' => 'Giảng viên đang trong thời gian nghỉ phép, vui lòng chọn giảng viên khác.',
-            ], 422);
-        }
-
 
         // Xử lý file nếu có
         $filePath = null;
@@ -111,6 +108,7 @@ class CapstoneRequestController extends Controller
         $capstoneRequest->load('lecturer');
 
         return response()->json([
+            'success' => true,
             'message' => 'Gửi yêu cầu đăng ký GVHD thành công.',
             'data'    => [
                 'capstone_request_id' => $capstoneRequest->capstone_request_id,
@@ -128,7 +126,7 @@ class CapstoneRequestController extends Controller
                     'email'       => $capstoneRequest->lecturer->email,
                     'degree'      => $capstoneRequest->lecturer->degree,
                 ] : null,
-                'created_at'          => $capstoneRequest->created_at?->format('d/m/Y H:i'),
+                'created_at' => $capstoneRequest->created_at?->format('d/m/Y H:i'),
             ],
         ], 201);
     }
@@ -137,19 +135,23 @@ class CapstoneRequestController extends Controller
     // POST /capstone-requests/register-new-topic
     public function registerTopic(Request $request)
     {
-        //
         $validated = $request->validate([
             'capstone_id' => 'required|exists:capstones,capstone_id',
             'topic_id'    => 'required|exists:topics,topic_id',
         ]);
 
-        // Tạo request mới
         $capstoneRequest = CapstoneRequest::create([
             'capstone_id' => $validated['capstone_id'],
             'topic_id'    => $validated['topic_id'],
             'type'        => CapstoneRequest::TYPE_TOPIC_PROP,
             'status'      => CapstoneRequest::STATUS_PENDING_FACULTY,
         ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đăng ký đề tài mới thành công.',
+            'data'    => $capstoneRequest,
+        ], 201);
     }
 
     // UC20: Đăng ký đề tài từ ngân hàng
@@ -161,12 +163,17 @@ class CapstoneRequestController extends Controller
             'topic_id'    => 'required|exists:topics,topic_id',
         ]);
 
-        // Tạo request mới
         $capstoneRequest = CapstoneRequest::create([
             'capstone_id' => $validated['capstone_id'],
             'topic_id'    => $validated['topic_id'],
             'type'        => CapstoneRequest::TYPE_TOPIC_BANK,
             'status'      => CapstoneRequest::STATUS_PENDING_FACULTY,
         ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đăng ký đề tài từ ngân hàng thành công.',
+            'data'    => $capstoneRequest,
+        ], 201);
     }
 }
