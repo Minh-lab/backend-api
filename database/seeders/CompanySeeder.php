@@ -10,6 +10,7 @@ class CompanySeeder extends Seeder
 {
     public function run(): void
     {
+        // --- Dữ liệu gốc (giữ nguyên để test) ---
         $rows = [
             [
                 'usercode'     => '0100111000',
@@ -78,6 +79,34 @@ class CompanySeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ]));
+        }
+
+        // --- Faker: Sinh thêm 25 doanh nghiệp ngẫu nhiên ---
+        $faker         = \Faker\Factory::create('vi_VN');
+        $companySuffixes = ['Cổ phần', 'TNHH', 'TNHH MTV', 'Tập đoàn'];
+        $techKeywords  = ['Tech', 'Solutions', 'Digital', 'Software', 'Systems', 'Innovation', 'Data', 'Cloud', 'AI', 'Dev'];
+
+        for ($i = 6; $i <= 30; $i++) {
+            $num      = str_pad($i, 3, '0', STR_PAD_LEFT);
+            $usercode = $faker->unique()->numerify('01########');
+            $suffix   = $companySuffixes[array_rand($companySuffixes)];
+            $tech     = $techKeywords[array_rand($techKeywords)];
+            $slug     = 'company_' . $num;
+
+            DB::table('companies')->insertOrIgnore([
+                'usercode'     => $usercode,
+                'username'     => $slug,
+                'password'     => Hash::make('Company@123'),
+                'email'        => "hr@{$slug}.com.vn",
+                'name'         => "Công ty {$suffix} {$tech} {$num} Việt Nam",
+                'address'      => $faker->address,
+                'website'      => "https://www.{$slug}.com.vn",
+                'is_active'    => 1,
+                'first_login'  => 0,
+                'is_partnered' => rand(0, 1),
+                'created_at'   => now(),
+                'updated_at'   => now(),
+            ]);
         }
     }
 }

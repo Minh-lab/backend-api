@@ -9,6 +9,7 @@ class LecturerRequestSeeder extends Seeder
 {
     public function run(): void
     {
+        // --- Dữ liệu gốc ---
         $rows = [
             [
                 'lecturer_id'      => 3,
@@ -69,6 +70,52 @@ class LecturerRequestSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ]));
+        }
+
+        // --- Sinh thêm 20 yêu cầu ngẫu nhiên ---
+        $types    = ['LEAVE_REQ', 'TOPIC_ADD', 'TOPIC_EDIT'];
+        $statuses = ['PENDING', 'APPROVED', 'REJECTED'];
+        $leaveTitles = [
+            'Xin nghỉ phép dự hội thảo công nghệ',
+            'Xin nghỉ phép học nâng cao trình độ',
+            'Xin nghỉ phép chăm sóc sức khỏe',
+            'Xin nghỉ phép tham gia nghiên cứu khoa học',
+        ];
+        $topicTitles = [
+            'Đề xuất thêm đề tài về AI trong y tế',
+            'Đề xuất thêm đề tài về Blockchain',
+            'Đề xuất cập nhật công nghệ đề tài hệ thống web',
+            'Đề xuất bổ sung đề tài ứng dụng di động',
+            'Yêu cầu sửa mô tả đề tài Cloud Computing',
+        ];
+        $feedbacks = [
+            'Chấp nhận, phù hợp với kế hoạch.', 'Đồng ý. Lưu ý bàn giao công việc trước khi nghỉ.',
+            'Từ chối vì lý do nhân sự không đủ.', null,
+        ];
+
+        for ($i = 5; $i <= 24; $i++) {
+            $type       = $types[array_rand($types)];
+            $status     = $statuses[array_rand($statuses)];
+            $lecturerId = rand(1, 6);
+            $isLeave    = $type === 'LEAVE_REQ';
+            $title      = $isLeave ? $leaveTitles[array_rand($leaveTitles)] : $topicTitles[array_rand($topicTitles)];
+            $feedback   = $status !== 'PENDING' ? $feedbacks[array_rand($feedbacks)] : null;
+
+            DB::table('lecturer_requests')->insertOrIgnore([
+                'lecturer_id'      => $lecturerId,
+                'updated_topic_id' => null,
+                'topic_id'         => (!$isLeave && $type === 'TOPIC_EDIT') ? rand(1, 12) : null,
+                'type'             => $type,
+                'status'           => $status,
+                'title'            => $title,
+                'description'      => 'Chi tiết yêu cầu số ' . $i . ' được tạo tự động.',
+                'file_path'        => $isLeave ? 'requests/leave/gv' . str_pad($lecturerId, 3, '0', STR_PAD_LEFT) . "_req{$i}.pdf" : null,
+                'start_date'       => $isLeave ? '2025-0' . rand(1, 9) . '-' . str_pad(rand(1, 28), 2, '0', STR_PAD_LEFT) : null,
+                'end_date'         => $isLeave ? '2025-0' . rand(1, 9) . '-' . str_pad(rand(1, 28), 2, '0', STR_PAD_LEFT) : null,
+                'faculty_feedback' => $feedback,
+                'created_at'       => now(),
+                'updated_at'       => now(),
+            ]);
         }
     }
 }

@@ -9,6 +9,7 @@ class TopicSeeder extends Seeder
 {
     public function run(): void
     {
+        // --- Dữ liệu gốc ---
         $rows = [
             ['expertise_id' => 1, 'lecturer_id' => 1, 'faculty_staff_id' => null,
              'title' => 'Xây dựng hệ thống quản lý bán hàng trực tuyến',
@@ -76,6 +77,64 @@ class TopicSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ]));
+        }
+
+        // --- Faker: Sinh thêm 48 đề tài ngẫu nhiên ---
+        $faker = \Faker\Factory::create('vi_VN');
+
+        $titleTemplates = [
+            'Hệ thống quản lý {0} thông minh',
+            'Ứng dụng {0} trực tuyến',
+            'Xây dựng nền tảng {0} sử dụng {1}',
+            'Phân tích dữ liệu {0} với Machine Learning',
+            'Phát triển ứng dụng di động hỗ trợ {0}',
+            'Nghiên cứu và triển khai {0} cho doanh nghiệp vừa và nhỏ',
+            'Tối ưu hóa {0} dựa trên thuật toán {1}',
+            'Xây dựng API {0} theo kiến trúc RESTful',
+            'Hệ thống giám sát {0} theo thời gian thực',
+            'Ứng dụng AI hỗ trợ {0} trong giáo dục',
+        ];
+
+        $domains = [
+            'bệnh viện', 'trường học', 'kho hàng', 'nhân sự', 'thư viện',
+            'đặt phòng khách sạn', 'giao thông', 'nông nghiệp', 'y tế',
+            'tài chính cá nhân', 'thương mại điện tử', 'logistic',
+            'chăm sóc sức khỏe', 'giáo dục trực tuyến', 'bán lẻ',
+        ];
+
+        $techStacks = [
+            'Laravel, Vue.js, MySQL',
+            'React, Node.js, MongoDB',
+            'Django, PostgreSQL, Redis',
+            'Flutter, Firebase',
+            'Spring Boot, Angular, Oracle',
+            'Python, FastAPI, Elasticsearch',
+            'Next.js, Prisma, PostgreSQL',
+            'Golang, Docker, Kubernetes',
+            'NestJS, TypeORM, MariaDB',
+            'PHP, Bootstrap, jQuery, MySQL',
+        ];
+
+        for ($i = 1; $i <= 48; $i++) {
+            $template    = $titleTemplates[array_rand($titleTemplates)];
+            $domain      = $domains[array_rand($domains)];
+            $tech        = $techStacks[array_rand($techStacks)];
+            $title       = str_replace(['{0}', '{1}'], [$domain, explode(',', $tech)[0]], $template);
+            $expertiseId = rand(1, 8);
+            $lecturerId  = rand(1, 6);
+
+            DB::table('topics')->insertOrIgnore([
+                'expertise_id'    => $expertiseId,
+                'lecturer_id'     => $lecturerId,
+                'faculty_staff_id'=> null,
+                'title'           => $title . " (M{$i})",
+                'description'     => "Đề tài nghiên cứu và phát triển hệ thống " . $domain . " " . $faker->sentence(6),
+                'technologies'    => $tech,
+                'is_available'    => rand(0, 1),
+                'is_bank_topic'   => 1,
+                'created_at'      => now(),
+                'updated_at'      => now(),
+            ]);
         }
     }
 }

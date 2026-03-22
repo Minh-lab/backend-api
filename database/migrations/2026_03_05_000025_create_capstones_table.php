@@ -13,7 +13,7 @@ return new class extends Migration {
         // database/migrations/2024_01_01_000025_create_capstones_table.php
         Schema::create('capstones', function (Blueprint $table) {
             $table->bigIncrements('capstone_id');
-            $table->unsignedBigInteger('topic_id');
+            $table->unsignedBigInteger('topic_id')->nullable();
             $table->unsignedBigInteger('student_id')->nullable();
             $table->unsignedBigInteger('lecturer_id')->nullable();
             $table->unsignedBigInteger('council_id')->nullable();

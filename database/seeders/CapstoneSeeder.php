@@ -9,6 +9,7 @@ class CapstoneSeeder extends Seeder
 {
     public function run(): void
     {
+        // --- Dữ liệu gốc ---
         $rows = [
             ['topic_id' => 1, 'student_id' => 1, 'lecturer_id' => 1, 'council_id' => 1, 'semester_id' => 8,
              'status' => 'COMPLETED', 'instructor_grade' => 8.5, 'council_grade' => 8.0, 'defense_order' => 1],
@@ -31,6 +32,33 @@ class CapstoneSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ]));
+        }
+
+        // --- Sinh thêm đồ án cho sinh viên 11 đến 50 ---
+        // Map student -> topic, lecturer, council, status
+        $statuses     = ['TOPIC_APPROVED', 'REPORTING', 'DEFENSE_ELIGIBLE', 'COMPLETED'];
+        $topicIds     = range(1, 12);   // 12 đề tài gốc đang có
+        $lecturerIds  = range(1, 6);
+        $councilIds   = [1, 2, 3, 4, null];
+
+        for ($studentId = 11; $studentId <= 50; $studentId++) {
+            $status      = $statuses[array_rand($statuses)];
+            $isCompleted = $status === 'COMPLETED';
+            $councilId   = $isCompleted ? array_rand(array_flip([1, 2])) : ($status === 'DEFENSE_ELIGIBLE' ? rand(1, 4) : null);
+
+            DB::table('capstones')->insertOrIgnore([
+                'topic_id'         => $topicIds[array_rand($topicIds)],
+                'student_id'       => $studentId,
+                'lecturer_id'      => $lecturerIds[array_rand($lecturerIds)],
+                'council_id'       => $councilId,
+                'semester_id'      => 8,
+                'status'           => $status,
+                'instructor_grade' => $isCompleted ? round(rand(65, 100) / 10, 1) : null,
+                'council_grade'    => $isCompleted ? round(rand(65, 100) / 10, 1) : null,
+                'defense_order'    => $isCompleted ? ($studentId - 10) : null,
+                'created_at'       => now(),
+                'updated_at'       => now(),
+            ]);
         }
     }
 }
