@@ -9,6 +9,8 @@ Route::middleware(['auth:sanctum', 'role:student'])->prefix('internships')->grou
 
     // UC 33: Lấy đợt đăng ký thực tập đang mở
     Route::get('/milestone', [InternshipController::class, 'getRegisterMilestone']);
+    // Lấy danh sách tất cả các đợt (Milestones) thực tập
+    Route::get('/milestones', [InternshipController::class, 'getMilestones']);
     // UC 33: Lấy trạng thái thực tập hiện tại
     Route::get('/status', [InternshipController::class, 'getStatus']);
     // UC 33: Đăng ký đợt thực tập
@@ -26,6 +28,9 @@ Route::middleware(['auth:sanctum', 'role:student'])->prefix('internships')->grou
 
     // UC 37: Lấy danh sách doanh nghiệp đối tác
     Route::get('/available-companies', [InternshipController::class, 'getAvailableCompanies']);
+
+    // UC 38: Yêu cầu hủy thực tập
+    Route::post('/request-cancel', [InternshipController::class, 'requestCancelInternship']);
 });
 
 // Group cho Văn phòng khoa (UC 42)
@@ -46,8 +51,6 @@ Route::middleware(['auth:sanctum', 'role:vpk'])->prefix('vpk/internships')->grou
 
     // Bước 6: Thực hiện nút "Phân công"
     Route::post('/assign-company', [InternshipController::class, 'assignCompany']);
-    // UC 38: Yêu cầu hủy thực tập
-    Route::post('/request-cancel', [InternshipController::class, 'requestCancelInternship']);
 });
 //UC 43
 Route::middleware(['auth:sanctum', 'role:vpk'])->prefix('vpk/internships')->group(function () {

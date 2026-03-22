@@ -28,6 +28,7 @@ class Internship extends Model
 
     // Các trạng thái thực tập
     const STATUS_INITIALIZED       = 'INITIALIZED';
+    const STATUS_PENDING           = 'PENDING';
     const STATUS_LECTURER_APPROVED = 'LECTURER_APPROVED';
     const STATUS_COMPANY_APPROVED  = 'COMPANY_APPROVED';
     const STATUS_INTERNING         = 'INTERNING';

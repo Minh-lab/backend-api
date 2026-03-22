@@ -665,6 +665,14 @@ class CapstoneController extends Controller
                 'status' => 'PENDING_CANCEL'
             ]);
 
+            // Lưu lịch sử request
+            \App\Models\CapstoneRequest::create([
+                'capstone_id' => $capstone->capstone_id,
+                'type' => \App\Models\CapstoneRequest::TYPE_CANCEL_REQ,
+                'status' => \App\Models\CapstoneRequest::STATUS_PENDING_TEACHER,
+                'student_message' => 'Sinh viên yêu cầu hủy học phần đồ án.',
+            ]);
+
             // 6. Gửi thông báo cho Văn phòng khoa (Role ID: 3)
             // Giả định gửi cho một nhân viên quản lý hoặc thông báo chung hệ thống
             $this->sendNotification(

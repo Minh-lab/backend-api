@@ -99,6 +99,22 @@ class InternshipController extends Controller
         ]);
     }
 
+    /**
+     * Lấy danh sách tất cả các đợt (Milestones) của thực tập (Đề cương, Báo cáo...)
+     */
+    public function getMilestones()
+    {
+        $milestones = Milestone::where('type', Milestone::TYPE_INTERNSHIP)
+            ->orderBy('start_date', 'asc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $milestones
+        ]);
+    }
+
+
     public function register(RegisterInternshipRequest $request)
     {
         $studentId = auth()->id();
@@ -113,8 +129,21 @@ class InternshipController extends Controller
         }
 
         // 2. Ngoại lệ 3a (BR-1): Kiểm tra đã đăng ký thực tập trước đó trong học kỳ này chưa
+        $semester_id = $milestone->semester_id;
+        
+        if (!$semester_id) {
+            $semester = \App\Models\Semester::latest('start_date')->first();
+            $semester_id = $semester ? $semester->semester_id : 1;
+        }
+
+        // Xóa thực tập cũ bị hủy/đang chờ hủy/thất bại để sv có thể test đăng ký lại
+        Internship::where('student_id', $studentId)
+            ->where('semester_id', $semester_id)
+            ->whereIn('status', ['CANCEL', 'CANCEL_PENDING', 'FAILED'])
+            ->delete();
+
         $alreadyRegistered = Internship::where('student_id', $studentId)
-            ->where('semester_id', $milestone->semester_id)
+            ->where('semester_id', $semester_id)
             ->exists();
 
         if ($alreadyRegistered) {
@@ -125,10 +154,10 @@ class InternshipController extends Controller
         }
 
         // 3. Luồng chính: Tạo bản ghi thực tập mới
-        return DB::transaction(function () use ($studentId, $milestone) {
+        return DB::transaction(function () use ($studentId, $semester_id) {
             $internship = Internship::create([
                 'student_id' => $studentId,
-                'semester_id' => $milestone->semester_id,
+                'semester_id' => $semester_id,
                 'status' => 'INITIALIZED', // Trạng thái khởi tạo bản ghi
             ]);
 
@@ -180,6 +209,24 @@ class InternshipController extends Controller
             return response()->json(['message' => 'Đã hết hạn đăng ký doanh nghiệp (BR-3)'], 400);
         }
 
+        // Kiểm tra xem đã có yêu cầu đăng ký doanh nghiệp nào đang chờ xử lý hoặc đã được duyệt chưa
+        $existingRequest = InternshipRequest::where('internship_id', $request->internship_id)
+            ->where('type', InternshipRequest::TYPE_COMPANY_REG)
+            ->whereIn('status', [
+                InternshipRequest::STATUS_PENDING_TEACHER,
+                InternshipRequest::STATUS_PENDING_FACULTY,
+                InternshipRequest::STATUS_PENDING_COMPANY,
+                InternshipRequest::STATUS_APPROVED
+            ])
+            ->exists();
+
+        if ($existingRequest) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn đã gửi yêu cầu đăng ký doanh nghiệp rồi. Vui lòng đợi kết quả hoặc hủy yêu cầu cũ nếu muốn đổi.'
+            ], 400);
+        }
+
         return DB::transaction(function () use ($request) {
             $companyId = null;
             $proposedId = null;
@@ -214,8 +261,14 @@ class InternshipController extends Controller
                 'student_message' => $request->position, // Lưu vị trí thực tập
                 'file_path' => $path,
             ]);
+            // Cập nhật trạng thái và vị trí vào bản ghi thực tập (để frontend nhận diện đã đăng ký)
+            $internship = Internship::find($request->internship_id);
+            $internship->update([
+                'status' => Internship::STATUS_PENDING,
+                'position' => $request->position
+            ]);
 
-            return (new InternshipRequestResource($internReq))
+            return (new InternshipResource($internship->load(['company', 'requests'])))
                 ->additional(['success' => true, 'message' => 'Đăng ký doanh nghiệp thành công (Bước 11)']);
         });
     }
@@ -270,9 +323,11 @@ class InternshipController extends Controller
                 $internReq->update(['status' => InternshipRequest::STATUS_APPROVED]);
 
                 // Cập nhật thông tin doanh nghiệp vào bản ghi Internship của các SV được chọn (BR-4)
-                $internReq->internship()->update([
+                $internship = $internReq->internship;
+                $internship->update([
                     'company_id' => $internReq->company_id,
-                    'status' => 'COMPANY_APPROVED'
+                    'status' => 'COMPANY_APPROVED',
+                    'position' => $internReq->student_message // Lấy vị trí từ yêu cầu
                 ]);
 
             // Bước 9: Gửi email (Giả định có Class Mail)
@@ -574,7 +629,7 @@ class InternshipController extends Controller
             $cancelReq = InternshipRequest::create([
                 'internship_id' => $internship->internship_id,
                 'type' => InternshipRequest::TYPE_CANCEL_REQ,
-                'status' => InternshipRequest::STATUS_PENDING_FACULTY, // Chờ VPK xử lý
+                'status' => InternshipRequest::STATUS_PENDING_TEACHER, // Chờ GV xử lý
                 'student_message' => 'Sinh viên yêu cầu hủy học phần thực tập.',
             ]);
 

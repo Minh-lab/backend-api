@@ -18,29 +18,51 @@ class CapstoneRequestController extends Controller
     // POST /capstonerequest/register-capstone
     public function registerCapstone(Request $request)
     {
+        $studentId = auth()->id();
+
+        $request->merge(['student_id' => $studentId]);
+
         $request->validate([
-            'topic_id'   => 'required|exists:topics,topic_id',
+            'topic_id'   => 'nullable|exists:topics,topic_id',
             'student_id' => 'required|exists:students,student_id',
         ]);
 
-        $capstone = Capstone::create([
-            'topic_id'   => $request->topic_id,
-            'student_id' => $request->student_id,
-            'status'     => Capstone::STATUS_INITIALIZED,
-        ]);
+        $milestone = \App\Models\Milestone::where('type', \App\Models\Milestone::TYPE_CAPSTONE)->upcoming()->first();
+        $semester_id = $milestone ? $milestone->semester_id : null;
+        
+        if (!$semester_id) {
+            $semester = \App\Models\Semester::latest('start_date')->first();
+            $semester_id = $semester ? $semester->semester_id : 1;
+        }
 
-        // Tạo request mới
-        $capstoneRequest = CapstoneRequest::create([
-            'capstone_id' => $capstone->capstone_id,
-            'type'        => CapstoneRequest::TYPE_LECTURER_REG,
-            'status'      => CapstoneRequest::STATUS_PENDING_TEACHER,
+        // Xóa đồ án cũ bị hủy/đang chờ hủy/thất bại để sv có thể test đăng ký lại
+        Capstone::where('student_id', $request->student_id)
+            ->where('semester_id', $semester_id)
+            ->whereIn('status', [Capstone::STATUS_CANCEL, 'PENDING_CANCEL', Capstone::STATUS_FAILED])
+            ->delete();
+
+        $alreadyRegistered = Capstone::where('student_id', $request->student_id)
+            ->where('semester_id', $semester_id)
+            ->exists();
+
+        if ($alreadyRegistered) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn đã đăng ký đợt đồ án trong học kỳ này.'
+            ], 400);
+        }
+
+        $capstone = Capstone::create([
+            'topic_id'    => $request->topic_id ?? null,
+            'student_id'  => $studentId,
+            'semester_id' => $semester_id,
+            'status'      => Capstone::STATUS_INITIALIZED,
         ]);
 
         return response()->json([
             'success' => true,
             'data' => [
-                'capstone'         => $capstone,
-                'capstone_request' => $capstoneRequest,
+                'capstone' => $capstone,
             ]
         ], 201);
     }
@@ -56,9 +78,11 @@ class CapstoneRequestController extends Controller
             'file'            => 'nullable|file|mimes:pdf,doc,docx|max:10240',
         ]);
 
+        $studentId = auth()->id();
+        
         // Lấy capstone của sinh viên
         $capstone = Capstone::where('capstone_id', $validated['capstone_id'])
-            ->where('student_id', '1')
+            ->where('student_id', $studentId)
             ->firstOrFail();
 
         // Kiểm tra sinh viên có GVHD chưa
@@ -98,12 +122,12 @@ class CapstoneRequestController extends Controller
             $filePath = $request->file('file')->store('capstone_requests', 'public');
         }
 
-        // Tạo request mới
+        // Tạo request để chờ giảng viên duyệt
         $capstoneRequest = CapstoneRequest::create([
             'capstone_id'     => $validated['capstone_id'],
             'lecturer_id'     => $validated['lecturer_id'],
             'type'            => CapstoneRequest::TYPE_LECTURER_REG,
-            'status'          => CapstoneRequest::STATUS_PENDING_TEACHER,
+            'status'          => \App\Models\CapstoneRequest::STATUS_PENDING_TEACHER,
             'student_message' => $validated['student_message'] ?? null,
             'file_path'       => $filePath,
         ]);

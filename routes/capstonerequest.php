@@ -4,7 +4,7 @@ use App\Http\Controllers\Capstone\CapstoneRequestController;
 use Illuminate\Support\Facades\Route;
 
 
-Route::middleware(['auth:sanctum', 'role:company'])->prefix('capstonerequest')->group(function () {
+Route::middleware(['auth:sanctum', 'role:student'])->prefix('capstonerequest')->group(function () {
     // UC17: Đăng ký đợt đồ án
     Route::post('/register-capstone', [CapstoneRequestController::class, 'registerCapstone']);
     // UC18: Đăng ký GVHD DA
