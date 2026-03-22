@@ -25,6 +25,12 @@ class CapstoneSeeder extends Seeder
 
             ['topic_id' => 11, 'student_id' => 7, 'lecturer_id' => 5, 'council_id' => null, 'semester_id' => 8,
              'status' => 'TOPIC_APPROVED', 'instructor_grade' => null, 'council_grade' => null, 'defense_order' => null],
+
+            ['topic_id' => 3, 'student_id' => 8, 'lecturer_id' => 2, 'council_id' => null, 'semester_id' => 8,
+             'status' => 'PENDING_TEACHER', 'instructor_grade' => null, 'council_grade' => null, 'defense_order' => null],
+
+            ['topic_id' => 5, 'student_id' => 9, 'lecturer_id' => 3, 'council_id' => null, 'semester_id' => 8,
+             'status' => 'PENDING_CANCEL', 'instructor_grade' => null, 'council_grade' => null, 'defense_order' => null],
         ];
 
         foreach ($rows as $row) {
@@ -36,7 +42,7 @@ class CapstoneSeeder extends Seeder
 
         // --- Sinh thêm đồ án cho sinh viên 11 đến 50 ---
         // Map student -> topic, lecturer, council, status
-        $statuses     = ['TOPIC_APPROVED', 'REPORTING', 'DEFENSE_ELIGIBLE', 'COMPLETED'];
+        $statuses     = ['PENDING_TEACHER', 'TOPIC_APPROVED', 'REPORTING', 'DEFENSE_ELIGIBLE', 'COMPLETED', 'PENDING_CANCEL'];
         $topicIds     = range(1, 12);   // 12 đề tài gốc đang có
         $lecturerIds  = range(1, 6);
         $councilIds   = [1, 2, 3, 4, null];

@@ -19,9 +19,9 @@ return new class extends Migration {
             $table->unsignedBigInteger('council_id')->nullable();
             $table->unsignedBigInteger('semester_id');
             $table->string('status', 100)->default('INITIALIZED');
-            // INITIALIZED | LECTURER_APPROVED | TOPIC_APPROVED | REPORTING
+            // INITIALIZED | PENDING_TEACHER | LECTURER_APPROVED | TOPIC_APPROVED | REPORTING
             // OFFICIAL_SUBMITTED | REVIEW_ELIGIBLE | DEFENSE_ELIGIBLE
-            // CANCEL | FAILED | COMPLETED
+            // PENDING_CANCEL | CANCEL | FAILED | COMPLETED
             $table->decimal('instructor_grade', 4, 2)->nullable();
             $table->decimal('council_grade', 4, 2)->nullable();
             $table->unsignedTinyInteger('defense_order')->nullable();
