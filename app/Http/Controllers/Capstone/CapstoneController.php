@@ -812,6 +812,14 @@ class CapstoneController extends Controller
         }
 
         return DB::transaction(function () use ($validated, $user) {
+            $semesterId = $this->resolveCurrentSemesterId();
+            if (!$semesterId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Khong tim thay hoc ky de dang ky de tai.'
+                ], 400);
+            }
+
             // Check if student already has an active capstone
             $existingCapstone = Capstone::where('student_id', $user->student_id)
                 ->whereNotIn('status', [Capstone::STATUS_CANCEL, Capstone::STATUS_FAILED])
@@ -828,6 +836,8 @@ class CapstoneController extends Controller
             $capstone = Capstone::create([
                 'topic_id' => $validated['topic_id'],
                 'student_id' => $user->student_id,
+                'lecturer_id' => $validated['lecturer_id'],
+                'semester_id' => $semesterId,
                 'status' => Capstone::STATUS_INITIALIZED,
             ]);
 
@@ -872,6 +882,14 @@ class CapstoneController extends Controller
         }
 
         return DB::transaction(function () use ($validated, $user) {
+            $semesterId = $this->resolveCurrentSemesterId();
+            if (!$semesterId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Khong tim thay hoc ky de de xuat de tai.'
+                ], 400);
+            }
+
             // Check if student already has an active capstone
             $existingCapstone = Capstone::where('student_id', $user->student_id)
                 ->whereNotIn('status', [Capstone::STATUS_CANCEL, Capstone::STATUS_FAILED])
@@ -897,6 +915,7 @@ class CapstoneController extends Controller
             $capstone = Capstone::create([
                 'topic_id' => $topic->topic_id,
                 'student_id' => $user->student_id,
+                'semester_id' => $semesterId,
                 'status' => Capstone::STATUS_INITIALIZED,
             ]);
 
@@ -1052,6 +1071,23 @@ class CapstoneController extends Controller
      * UC 22 - Get student's capstone status
      * GET /capstones/my-status
      */
+    private function resolveCurrentSemesterId(): ?int
+    {
+        $currentSemester = Semester::whereDate('start_date', '<=', now())
+            ->whereDate('end_date', '>=', now())
+            ->first();
+
+        if ($currentSemester) {
+            return $currentSemester->semester_id;
+        }
+
+        $latestSemester = Semester::orderByDesc('start_date')
+            ->orderByDesc('semester_id')
+            ->first();
+
+        return $latestSemester?->semester_id;
+    }
+
     public function getMyCapstoneStatus()
     {
         $user = Auth::user();

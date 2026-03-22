@@ -20,7 +20,8 @@ class TopicResource extends JsonResource
         // lecturer
         $lecturer = $this->relationLoaded('lecturer')
             ? [
-                'lecturer_id' => $this->lecturer?->usercode,
+                'lecturer_id' => $this->lecturer?->lecturer_id,
+                'usercode'    => $this->lecturer?->usercode,
                 'full_name'   => $this->lecturer?->full_name,
                 'expertises'  => $this->lecturer?->relationLoaded('expertises')
                     ? $this->lecturer->expertises->map(fn($e) => [

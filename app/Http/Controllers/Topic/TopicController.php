@@ -26,7 +26,18 @@ class TopicController extends Controller
         $expertiseId = $request->query('expertise_id');
         $perPage = max(1, min((int)$request->query('per_page', 10), 100));
 
-        $query = Topic::with('expertise')->select('topic_id', 'title', 'technologies', 'description', 'expertise_id', 'created_at');
+        $query = Topic::with('expertise')->select(
+            'topic_id',
+            'expertise_id',
+            'lecturer_id',
+            'faculty_staff_id',
+            'title',
+            'description',
+            'technologies',
+            'is_available',
+            'is_bank_topic',
+            'created_at'
+        );
 
         // Filter by current user if they're accessing via /lecturer route
         // Lecturers only see their own topics
