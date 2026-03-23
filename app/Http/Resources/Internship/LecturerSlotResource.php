@@ -18,8 +18,11 @@ class LecturerSlotResource extends JsonResource
 
         return [
             'lecturer_id'   => $this->lecturer_id,
-            'full_name'     => $this->full_name,
             'usercode'      => $this->usercode,
+            'full_name'     => $this->full_name,
+            'major'         => $this->major ?? 'N/A',
+            'email'         => $this->email,
+            'phone'         => $this->phone,
             'current_slots' => $currentGuiding,
             'max_slots'     => $maxSlots,
             'is_on_leave'   => $isOnLeave,

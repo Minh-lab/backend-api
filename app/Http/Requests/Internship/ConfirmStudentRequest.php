@@ -16,6 +16,8 @@ class ConfirmStudentRequest extends FormRequest
         return [
             // status: ACCEPT (Đồng ý) hoặc REJECT (Từ chối)
             'status' => 'required|in:ACCEPT,REJECT',
+            // feedback: optional, used when rejecting
+            'feedback' => 'nullable|string',
         ];
     }
 
@@ -23,7 +25,7 @@ class ConfirmStudentRequest extends FormRequest
     {
         return [
             'status.required' => 'Vui lòng chọn hành động xác nhận.',
-            'status.in'       => 'Hành động không hợp lệ.',
+            'status.in'       => 'Hành động không hợp lệ (ACCEPT hoặc REJECT).',
         ];
     }
 }

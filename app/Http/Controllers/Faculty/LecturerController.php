@@ -16,7 +16,7 @@ class LecturerController extends Controller
      */
     public function index(): JsonResponse
     {
-        $lecturers = Lecturer::all();
+        $lecturers = Lecturer::with('expertises')->get();
 
         return response()->json([
             'success' => true,

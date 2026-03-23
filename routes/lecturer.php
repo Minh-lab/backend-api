@@ -1,17 +1,18 @@
 <?php
 use App\Http\Controllers\Lecturer\LecturerController;
-use App\Http\Controllers\Internship\InternshipController;
-use App\Http\Controllers\Capstone\CapstoneController;
+use App\Http\Controllers\Internship\{ReportReviewController, GradingController, CancellationController, InternshipSearchController};
+use App\Http\Controllers\Capstone\{RegistrationController, TopicApprovalController, ReportApprovalController, GradingController as CapstoneGradingController, ReviewController, CancellationController as CapstoneCancellationController};
 use App\Http\Controllers\Lecturer\ProfileController;
 use App\Http\Controllers\Lecturer\LeaveRequestController as LecturerLeaveRequestController;
 use Illuminate\Support\Facades\Route;
 
 
 // (Duyệt nghỉ phép - UC 48)
-Route::middleware(['auth:sanctum', 'role:vpk'])->prefix('vpk')->group(function () {
+Route::middleware(['auth:sanctum', 'role:faculty_staff'])->prefix('faculty_staff')->group(function () {
     Route::get('/lecturers', [LecturerController::class, 'index']);           // Bước 2: Danh sách
     Route::get('/lecturers/{id}', [LecturerController::class, 'show']);       // Bước 4: Chi tiết
-    Route::post('/lecturers/{id}/approve', [LecturerController::class, 'approveLeave']); // Bước 5: Duyệt
+    Route::post('/lecturers/{id}/approve', [LecturerController::class, 'approveLeave']); // Bước 5: Phê duyệt
+    Route::post('/lecturers/{id}/reject', [LecturerController::class, 'rejectLeave']);   // Bước 6: Từ chối
 });
 
 // UC 47: Tìm kiếm giảng viên - Dành cho Sinh viên và VPK
@@ -20,55 +21,56 @@ Route::middleware(['auth:sanctum'])->group(function () {
 });
 
 //UC 40
-
-
 Route::middleware(['auth:sanctum', 'role:lecturer'])->prefix('lecturer/internships')->group(function () {
-    Route::get('/pending-reports', [InternshipController::class, 'getReportsToReview']); // UC 40
-    Route::post('/reports/{id}/review', [InternshipController::class, 'reviewReport']);   // UC 40
+    Route::get('/pending-reports', [ReportReviewController::class, 'getReportsToReview']); // UC 40
+    Route::post('/reports/{id}/review', [ReportReviewController::class, 'reviewReport']);   // UC 40
 });
 
 //UC 36
 Route::middleware(['auth:sanctum', 'role:lecturer'])->prefix('lecturer/internships')->group(function () {
     // Tìm kiếm trong phạm vi SV hướng dẫn
-    Route::get('/search', [InternshipController::class, 'search']);
+    Route::get('/search', [InternshipSearchController::class, 'search']);
 });
+
 //UC 41
 Route::middleware(['auth:sanctum', 'role:lecturer'])->prefix('lecturer/internships')->group(function () {
 
     // Bước 3: Danh sách sinh viên cần chấm điểm
-    Route::get('/grading-list', [InternshipController::class, 'getStudentsForGrading']);
+    Route::get('/grading-list', [GradingController::class, 'getStudentsForGrading']);
 
     // Bước 7: Thực hiện gửi điểm
-    Route::post('/{id}/grade', [InternshipController::class, 'submitGrade']);
+    Route::post('/{id}/grade', [GradingController::class, 'submitGrade']);
 });
+
 //UC 39
 Route::middleware(['auth:sanctum', 'role:lecturer'])->prefix('lecturer/internships')->group(function () {
     // UC 39.1
-    Route::get('/pending-cancels', [InternshipController::class, 'getPendingCancelLecturer']);
-    Route::post('/review-cancel/{id}', [InternshipController::class, 'reviewCancelLecturer']);
+    Route::get('/pending-cancels', [CancellationController::class, 'getPendingCancelLecturer']);
+    Route::post('/review-cancel/{id}', [CancellationController::class, 'reviewCancelLecturer']);
 });
 
 // UC 23
 Route::middleware(['auth:sanctum', 'role:lecturer'])->prefix('lecturer/capstones')->group(function () {
 
     // Bước 3: Xem danh sách chờ
-    Route::get('/pending-registrations', [CapstoneController::class, 'getPendingRegistrations']);
+    Route::get('/pending-registrations', [RegistrationController::class, 'getPendingRegistrations']);
 
     // Bước 4: Thực hiện Đồng ý/Từ chối
-    Route::post('/registrations/{id}/confirm', [CapstoneController::class, 'confirmRegistration']);
+    Route::post('/registrations/{id}/confirm', [RegistrationController::class, 'confirmRegistration']);
 });
+
 // UC 24.1
 Route::middleware(['auth:sanctum', 'role:lecturer'])->prefix('lecturer/capstones')->group(function () {
     // UC 24.1
-    Route::get('/pending-topics', [CapstoneController::class, 'getPendingTopicsLecturer']);
-    Route::post('/topics/{id}/review', [CapstoneController::class, 'reviewTopicLecturer']);
+    Route::get('/pending-topics', [TopicApprovalController::class, 'getPendingTopicsLecturer']);
+    Route::post('/topics/{id}/review', [TopicApprovalController::class, 'reviewTopicLecturer']);
 });
 
 // UC 25: Phê duyệt báo cáo đồ án
 Route::middleware(['auth:sanctum', 'role:lecturer'])->prefix('lecturer/capstones')->group(function () {
 
     // Bước 3: Xem danh sách báo cáo chờ duyệt
-    Route::get('/pending-reports', [CapstoneController::class, 'getPendingReports']);
+    Route::get('/pending-reports', [ReportApprovalController::class, 'getPendingReports']);
 
     // Bước 4-5: Xem chi tiết (Sử dụng chung Resource)
     Route::get('/reports/{id}', function ($id) {
@@ -77,14 +79,15 @@ Route::middleware(['auth:sanctum', 'role:lecturer'])->prefix('lecturer/capstones
     });
 
     // Bước 6: Phê duyệt hoặc Từ chối
-    Route::post('/reports/{id}/approve', [CapstoneController::class, 'approveReport']);
+    Route::post('/reports/{id}/approve', [ReportApprovalController::class, 'approveReport']);
 });
+
 //UC 26
 Route::middleware(['auth:sanctum', 'role:lecturer'])->prefix('lecturer/capstones')->group(function () {
 
     // UC 26: Chấm điểm đồ án
     // Bước 3: Lấy danh sách SV cần chấm
-    Route::get('/grading', [CapstoneController::class, 'getGradingList']);
+    Route::get('/grading', [CapstoneGradingController::class, 'getGradingList']);
 
     // Bước 5: Xem chi tiết (Tận dụng Resource đã viết)
     Route::get('/grading/{id}', function ($id) {
@@ -93,14 +96,15 @@ Route::middleware(['auth:sanctum', 'role:lecturer'])->prefix('lecturer/capstones
     });
 
     // Bước 7: Thực hiện gửi điểm
-    Route::post('/grading/{id}/submit', [CapstoneController::class, 'submitGrade']);
+    Route::post('/grading/{id}/submit', [CapstoneGradingController::class, 'submitGrade']);
 });
+
 // UC 27
 Route::middleware(['auth:sanctum', 'role:lecturer'])->prefix('lecturer/capstones')->group(function () {
 
     // UC 27: Chấm điểm phản biện
     // Bước 1 & 3: Lấy danh sách SV cần phản biện
-    Route::get('/reviewing', [CapstoneController::class, 'getReviewingList']);
+    Route::get('/reviewing', [ReviewController::class, 'getReviewingList']);
 
     // Bước 4 & 5: Xem chi tiết (Tận dụng Resource)
     Route::get('/reviewing/{capstoneId}', function ($capstoneId) {
@@ -111,14 +115,15 @@ Route::middleware(['auth:sanctum', 'role:lecturer'])->prefix('lecturer/capstones
     });
 
     // Bước 7: Gửi điểm phản biện
-    Route::post('/reviewing/{capstoneId}/submit', [CapstoneController::class, 'submitReviewGrade']);
+    Route::post('/reviewing/{capstoneId}/submit', [ReviewController::class, 'submitReviewGrade']);
 });
+
 //UC 31
 Route::middleware(['auth:sanctum', 'role:lecturer'])->prefix('/lecturer/capstones')->group(function () {
 
     // UC 31.1: Xem và duyệt yêu cầu hủy
-    Route::get('/cancellations', [CapstoneController::class, 'getPendingCancellationsLecturer']);
-    Route::post('/cancellations/{id}/review', [CapstoneController::class, 'reviewCancellationLecturer']);
+    Route::get('/cancellations', [CapstoneCancellationController::class, 'getPendingCancellationsLecturer']);
+    Route::post('/cancellations/{id}/review', [CapstoneCancellationController::class, 'reviewCancellationLecturer']);
 
 
 // UC6 - Chuyên môn | UC7 - Nghỉ phép (Lecturer)
@@ -131,13 +136,4 @@ Route::prefix('lecturer')
         Route::post('/leave-requests', [LecturerLeaveRequestController::class , 'store']);
     });
 
-// UC48 - VPK duyệt nghỉ phép
-Route::prefix('vpk')
-    ->middleware(['auth:sanctum', 'role:faculty_staff'])
-    ->group(function () {
-        Route::get('/lecturers', [LecturerController::class , 'index']);
-        Route::get('/lecturers/{id}', [LecturerController::class , 'show']);
-        Route::post('/lecturers/{id}/approve', [LecturerController::class , 'approveLeave']);
-    });
 
-// UC47 - Tìm kiếm giảng viên (VPK, Admin, Student)

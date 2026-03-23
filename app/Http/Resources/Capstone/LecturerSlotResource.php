@@ -9,7 +9,7 @@ class LecturerSlotResource extends JsonResource
     public function toArray($request): array
     {
         $currentSlots = $this->capstones_count ?? 0;
-        $maxSlots = 30; // Giả định định mức tối đa của khoa
+        $maxSlots = 20; // Giả định định mức tối đa của khoa
 
         return [
             'lecturer_id'   => $this->lecturer_id,

@@ -162,7 +162,20 @@ class TopicController extends Controller
             ], 403);
         }
 
-        $topic->delete();
+        try {
+            $topic->delete();
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Check if it's a foreign key constraint violation
+            if ($e->getCode() === '23000' || strpos($e->getMessage(), '1451') !== false) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không thể xóa đề tài này',
+                    'detail' => 'Đề tài đang được sử dụng bởi một hoặc nhiều hồ sơ. Vui lòng kiểm tra xem có sinh viên nào đang sử dụng đề tài này không.'
+                ], 409);
+            }
+            // Re-throw if it's not a constraint violation
+            throw $e;
+        }
 
         return response()->json([
             'success' => true,

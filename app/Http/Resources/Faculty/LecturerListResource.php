@@ -14,7 +14,7 @@ class LecturerListResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return [
+    return [
             'lecturer_id' => $this->lecturer_id,
             'usercode' => $this->usercode,
             'full_name' => $this->full_name,
@@ -22,6 +22,13 @@ class LecturerListResource extends JsonResource
             'degree' => $this->degree,
             'department' => $this->department,
             'phone_number' => $this->phone_number,
+            // Include expertises (specializations)
+            'expertises' => $this->expertises->map(function ($expertise) {
+                return [
+                    'expertise_id' => $expertise->expertise_id,
+                    'name' => $expertise->name,
+                ];
+            })->toArray(),
         ];
     }
 }

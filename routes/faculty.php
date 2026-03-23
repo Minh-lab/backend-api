@@ -8,11 +8,13 @@ use App\Http\Controllers\Faculty\Council\CouncilMemberController;
 use App\Http\Controllers\Faculty\Council\CouncilGradeController;
 use App\Http\Controllers\Faculty\Council\CouncilScheduleController;
 use App\Http\Controllers\Faculty\LecturerController;
+use App\Http\Controllers\Faculty\CapstoneController;
 use Illuminate\Support\Facades\Route;
 
 
 Route::middleware(['auth:sanctum', 'role:faculty_staff'])
     ->prefix('faculty')
+    ->where(['councilId' => '[0-9]+', 'capstoneId' => '[0-9]+', 'id' => '[0-9]+', 'milestone' => '[0-9]+', 'milestoneId' => '[0-9]+'])
     ->group(function () {
 
         // SEMESTER 
@@ -37,6 +39,10 @@ Route::middleware(['auth:sanctum', 'role:faculty_staff'])
 
         // UC: Lấy danh sách giảng viên (cho phép chọn thành viên hội đồng)
         Route::get('/lecturers', [LecturerController::class, 'index']);
+
+        // UC: quản lý danh sách đồ án
+        Route::get('/capstones', [CapstoneController::class, 'index']);
+        Route::get('/capstones/{id}', [CapstoneController::class, 'show']);
 
         // UC: Tạo hội đồng chấm thi
         Route::post('/councils', [CouncilMemberController::class, 'create']);

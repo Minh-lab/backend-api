@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AccountController;
+use App\Http\Controllers\Admin\ClassController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -14,4 +15,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     Route::post('/accounts',        [AccountController::class, 'store']);          // UC 10 - Thêm
     Route::put('/accounts/{id}',   [AccountController::class, 'update']);        // UC 11 - Sửa
     Route::delete('/accounts/{id}',   [AccountController::class, 'destroy']);       // UC 12 - Xoá
+    
+    // Classes endpoints
+    Route::get('/classes',         [ClassController::class, 'index']);            // Lấy danh sách lớp học
 });

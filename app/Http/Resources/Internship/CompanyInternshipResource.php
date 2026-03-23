@@ -12,7 +12,7 @@ class CompanyInternshipResource extends JsonResource
             'internship_id'    => $this->internship_id,
             'student_code'     => $this->student->usercode ?? 'N/A',
             'full_name'        => $this->student->full_name ?? 'N/A',
-            'class_name'       => $this->student->class->class_name ?? 'N/A',
+            'class_name'       => $this->student->studentClass->class_name ?? 'N/A',
             'position'         => $this->position,
             'status'           => $this->status,
             'company_grade'    => $this->company_grade,

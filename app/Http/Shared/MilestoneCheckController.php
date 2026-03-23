@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Shared;
+namespace App\Http\Shared;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Faculty\CheckMilestoneRequest;

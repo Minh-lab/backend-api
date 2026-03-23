@@ -108,4 +108,30 @@ class LecturerController extends Controller
             ]);
         });
     }
+
+    /**
+     * UC 48 - Từ chối yêu cầu nghỉ phép
+     */
+    public function rejectLeave(Request $request, $id)
+    {
+        $feedback = $request->input('feedback', 'Yêu cầu nghỉ phép bị từ chối');
+
+        return DB::transaction(function () use ($id, $feedback) {
+            // Cập nhật trạng thái yêu cầu thành REJECTED
+            $leaveReq = LecturerRequest::where('lecturer_id', $id)
+                ->where('type', LecturerRequest::TYPE_LEAVE_REQ)
+                ->where('status', LecturerRequest::STATUS_PENDING)
+                ->firstOrFail();
+
+            $leaveReq->update([
+                'status' => LecturerRequest::STATUS_REJECTED,
+                'faculty_feedback' => $feedback,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Từ chối yêu cầu nghỉ phép thành công.'
+            ]);
+        });
+    }
 }
