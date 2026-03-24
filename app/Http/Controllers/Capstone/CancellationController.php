@@ -70,6 +70,19 @@ class CancellationController extends CapstoneBaseController
         }
 
         return DB::transaction(function () use ($capstone) {
+            // Nếu chưa có giảng viên hướng dẫn (mới khởi tạo), cho phép hủy ngay lập tức
+            if (!$capstone->lecturer_id) {
+                // Xóa mọi request cũ để dọn dẹp (nếu có)
+                CapstoneRequest::where('capstone_id', $capstone->capstone_id)->delete();
+                // Cập nhật trạng thái thành CANCEL
+                $capstone->update(['status' => Capstone::STATUS_CANCEL]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Đã hủy học phần đồ án thành công do chưa có giảng viên hướng dẫn.'
+                ]);
+            }
+
             // 5. Lưu yêu cầu hủy vào bảng capstone_requests (không thay đổi capstone.status)
             CapstoneRequest::create([
                 'capstone_id' => $capstone->capstone_id,

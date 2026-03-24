@@ -85,15 +85,19 @@ class CapstoneRequestController extends Controller
             ->where('student_id', $studentId)
             ->firstOrFail();
 
-        // Kiểm tra sinh viên có GVHD chưa
-        $hasLecturer = CapstoneRequest::where('capstone_id', $validated['capstone_id'])
+        // Kiểm tra sinh viên có GVHD hoặc yêu cầu đang chờ duyệt chưa
+        $existingRequest = CapstoneRequest::where('capstone_id', $validated['capstone_id'])
             ->where('type', CapstoneRequest::TYPE_LECTURER_REG)
-            ->where('status', CapstoneRequest::STATUS_APPROVED)
+            ->whereIn('status', [
+                CapstoneRequest::STATUS_PENDING_TEACHER,
+                CapstoneRequest::STATUS_PENDING_FACULTY,
+                CapstoneRequest::STATUS_APPROVED
+            ])
             ->exists();
-
-        if ($hasLecturer) {
+            
+        if ($existingRequest || $capstone->lecturer_id) {
             return response()->json([
-                'message' => 'Bạn đã đăng ký giảng viên hướng dẫn đồ án.',
+                'message' => 'Bạn đã đăng ký hoặc đã có giảng viên hướng dẫn rồi.',
             ], 422);
         }
 

@@ -15,6 +15,7 @@ class CapstoneReport extends Model
         'milestone_id',
         'status',
         'file_path',
+        'link',
         'lecturer_feedback',
         'submission_date',
     ];

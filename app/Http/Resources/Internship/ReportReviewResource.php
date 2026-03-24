@@ -17,8 +17,8 @@ class ReportReviewResource extends JsonResource
             'report_id'        => $this->report_id,
             'student_code'     => $student->usercode ?? 'N/A',
             'student_name'     => $student->full_name ?? 'N/A',
-            'position'         => $internship->internshipRequest->student_message ?? 'N/A', // Vị trí thực tập
-            'company_name'     => $company->name ?? 'N/A',
+            'position'         => $internship->position ?? 'N/A', // Vị trí thực tập
+            'company_name'     => $internship->company->name ?? 'N/A',
             'phase_name'       => $this->milestone->phase_name ?? 'N/A',
             'description'      => $this->description,
             'file_preview_url' => $this->file_path ? asset('storage/' . $this->file_path) : null, // NFR-1

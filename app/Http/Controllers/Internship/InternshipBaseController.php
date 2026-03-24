@@ -3,10 +3,30 @@
 namespace App\Http\Controllers\Internship;
 
 use App\Http\Controllers\Controller;
-use App\Models\{Notification, UserNotification};
+use App\Models\{Notification, UserNotification, Semester};
 
 class InternshipBaseController extends Controller
 {
+    /**
+     * Helper: Lấy semester ID hiện tại
+     */
+    protected function resolveCurrentSemesterId(): ?int
+    {
+        $currentSemester = Semester::whereDate('start_date', '<=', now())
+            ->whereDate('end_date', '>=', now())
+            ->first();
+
+        if ($currentSemester) {
+            return $currentSemester->semester_id;
+        }
+
+        $latestSemester = Semester::orderByDesc('start_date')
+            ->orderByDesc('semester_id')
+            ->first();
+
+        return $latestSemester?->semester_id;
+    }
+
     /**
      * Gửi thông báo cho người dùng
      */
