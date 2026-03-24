@@ -18,16 +18,16 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['auth:sanctum', 'role:student'])->prefix('internships')->group(function () {
 
     // UC 33: Lấy đợt đăng ký thực tập đang mở
-    // Route::get('/milestone', [InternshipController::class, 'getRegisterMilestone']);
+    Route::get('/milestone', [StudentInternshipController::class, 'getMilestone']);
     // Lấy danh sách tất cả các đợt (Milestones) thực tập
     Route::get('/milestones', [StudentInternshipController::class, 'getMilestones']);
     // UC 33: Lấy trạng thái thực tập hiện tại
     Route::get('/status', [StudentInternshipController::class, 'getStatus']);
     // UC 33: Đăng ký đợt thực tập
-    // Route::post('/register', [InternshipController::class, 'register']);
+    Route::post('/register', [StudentInternshipController::class, 'register']);
     // UC 34: Đăng ký doanh nghiệp
-    // Route::get('/check-company', [InternshipController::class, 'checkCompany']); // Bước 5
-    // Route::post('/register-company', [InternshipController::class, 'registerCompany']); // Bước 8
+    Route::get('/check-company', [StudentInternshipController::class, 'checkCompany']); // Bước 5
+    Route::post('/register-company', [StudentInternshipController::class, 'registerCompany']); // Bước 8
 
     // UC 35:
     // Lấy lịch sử nộp (Bước 4)
@@ -40,7 +40,7 @@ Route::middleware(['auth:sanctum', 'role:student'])->prefix('internships')->grou
     Route::get('/available-companies', [CompanyAssignmentController::class, 'getAvailableCompanies']);
 
     // UC 38: Yêu cầu hủy thực tập
-    // Route::post('/request-cancel', [InternshipController::class, 'requestCancelInternship']);
+    Route::post('/request-cancel', [CancellationController::class, 'requestCancel']);
 });
 
 // Group cho Văn phòng khoa (UC 42)

@@ -2,13 +2,91 @@
 
 namespace App\Http\Controllers\Internship;
 
-use App\Models\{Internship, InternshipRequest, Lecturer};
+use App\Models\{Internship, InternshipRequest, Lecturer, Milestone};
 use App\Http\Requests\Internship\ReviewCancelRequest;
 use App\Http\Resources\Internship\CancelRequestDetailResource;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class CancellationController extends InternshipBaseController
 {
+    /**
+     * UC 38: Sinh viên gửi yêu cầu hủy thực tập
+     */
+    public function requestCancel(Request $request)
+    {
+        $studentId = auth()->id();
+
+        // 1. Tìm internship của sinh viên
+        $internship = Internship::where('student_id', $studentId)
+            ->whereNotIn('status', [Internship::STATUS_CANCEL, Internship::STATUS_COMPLETED])
+            ->latest()
+            ->first();
+
+        if (!$internship) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn hiện không có đợt thực tập nào để yêu cầu hủy.'
+            ], 404);
+        }
+
+        // 2. Kiểm tra xem đã gửi yêu cầu hủy trước đó chưa
+        $existingRequest = InternshipRequest::where('internship_id', $internship->internship_id)
+            ->where('type', InternshipRequest::TYPE_CANCEL_REQ)
+            ->whereIn('status', [
+                InternshipRequest::STATUS_PENDING_TEACHER,
+                InternshipRequest::STATUS_PENDING_FACULTY,
+                InternshipRequest::STATUS_APPROVED,
+            ])
+            ->first();
+
+        if ($existingRequest) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn đã gửi yêu cầu hủy trước đó, vui lòng chờ xử lý.'
+            ], 400);
+        }
+
+        // 3. Kiểm tra thời hạn (Bypass for testing)
+        // BR-1: Trong vòng 14 ngày kể từ ngày bắt đầu đợt thực tập
+        $milestone = Milestone::where('semester_id', $internship->semester_id)
+            ->where('type', Milestone::TYPE_INTERNSHIP)
+            ->first();
+
+        return DB::transaction(function () use ($internship) {
+            // Nếu chưa có giảng viên hướng dẫn HOẶC mới chỉ ở bước INITIALIZED (vừa đăng ký xong), cho phép hủy ngay lập tức
+            if (!$internship->lecturer_id || $internship->status === Internship::STATUS_INITIALIZED) {
+                // Xóa mọi request liên quan để dọn dẹp
+                InternshipRequest::where('internship_id', $internship->internship_id)->delete();
+                
+                // Cập nhật trạng thái thành CANCEL
+                $internship->update(['status' => Internship::STATUS_CANCEL]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Đã hủy đợt thực tập thành công.'
+                ]);
+            }
+
+            // 4. Lưu yêu cầu hủy vào bảng internship_requests
+            InternshipRequest::create([
+                'internship_id' => $internship->internship_id,
+                'type' => InternshipRequest::TYPE_CANCEL_REQ,
+                'status' => InternshipRequest::STATUS_PENDING_TEACHER,
+                'student_message' => 'Sinh viên yêu cầu hủy học phần thực tập.',
+            ]);
+
+            // 5. Gửi thông báo cho giảng viên hướng dẫn
+            $this->notifyStudent($internship->lecturer_id, "Sinh viên đã gửi yêu cầu hủy thực tập. Vui lòng xem xét phê duyệt.");
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Gửi yêu cầu hủy thành công, vui lòng chờ giảng viên hướng dẫn phê duyệt.'
+            ]);
+        });
+    }
+
     /**
      * UC 39.1: Hiển thị danh sách sinh viên yêu cầu hủy (Dành cho GV hướng dẫn)
      */

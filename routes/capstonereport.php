@@ -3,7 +3,9 @@
 use App\Http\Controllers\Capstone\CapstoneReportsController;
 use Illuminate\Support\Facades\Route;
 
-// UC 21: Nộp báo cáo đồ án
+// Báo cáo đồ án
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/capstones/reports', [CapstoneReportsController::class, 'submitReport']);
+    Route::get('/capstones/milestones', [CapstoneReportsController::class, 'getMilestones']);
+    Route::get('/capstones/reports/history', [CapstoneReportsController::class, 'getReportHistory']);
+    Route::post('/capstones/reports/submit', [CapstoneReportsController::class, 'submitReport']);
 });

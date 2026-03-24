@@ -221,6 +221,10 @@ class StudentCapstoneController extends CapstoneBaseController
                     'lecturer_id' => $capstone->lecturer->lecturer_id,
                     'full_name' => $capstone->lecturer->full_name,
                 ] : null,
+                'has_pending_lecturer_request' => $capstone->requests()
+                    ->where('type', 'LECTURER_REG')
+                    ->whereIn('status', ['PENDING_TEACHER', 'PENDING_FACULTY', 'APPROVED'])
+                    ->exists(),
                 'created_at' => $capstone->created_at,
             ],
         ]);
