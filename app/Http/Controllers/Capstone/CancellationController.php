@@ -287,4 +287,120 @@ class CancellationController extends CapstoneBaseController
             return response()->json(['success' => true, 'message' => $resMsg]);
         });
     }
+
+    /**
+     * VPK API: Lấy danh sách yêu cầu hủy đợi VPK xử lý (API riêng cho VPK, dễ manage hơn)
+     * GET /faculty_staff/capstones/cancel-requests/pending
+     */
+    public function getVPKPendingCancelRequests()
+    {
+        try {
+            $list = CapstoneRequest::where('type', CapstoneRequest::TYPE_CANCEL_REQ)
+                ->where('status', CapstoneRequest::STATUS_PENDING_FACULTY)
+                ->with(['capstone.student.studentClass', 'capstone.topic', 'capstone.lecturer'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $list->map(function ($request) {
+                    $capstone = $request->capstone;
+                    return [
+                        'capstone_request_id' => $request->capstone_request_id,
+                        'capstone_id' => $capstone->capstone_id,
+                        'student_id' => $capstone->student->student_id,
+                        'student_code' => $capstone->student->usercode ?? 'N/A',
+                        'student_name' => $capstone->student->full_name ?? 'N/A',
+                        'class_name' => $capstone->student->studentClass->class_name ?? 'N/A',
+                        'topic_title' => $capstone->topic->title ?? 'N/A',
+                        'lecturer_name' => $capstone->lecturer->full_name ?? 'N/A',
+                        'student_message' => $request->student_message ?? 'Yêu cầu hủy đồ án',
+                        'lecturer_feedback' => $request->lecturer_feedback,
+                        'status' => $request->status,
+                        'requested_at' => optional($request->created_at)->format('Y-m-d H:i:s'),
+                    ];
+                })
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi lấy danh sách yêu cầu hủy: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * VPK API: Xử lý (duyệt/từ chối) yêu cầu hủy đồ án
+     * POST /faculty_staff/capstones/cancel-requests/{capstone_request_id}/process
+     * Body: { "action": "APPROVE" | "REJECT", "feedback": "optional message" }
+     */
+    public function processVPKCancellationRequest(Request $request, $capstone_request_id)
+    {
+        try {
+            $validated = $request->validate([
+                'action' => 'required|in:APPROVE,REJECT',
+                'feedback' => 'nullable|string|max:500'
+            ]);
+
+            return DB::transaction(function () use ($capstone_request_id, $validated) {
+                // Tìm capstone_request bằng capstone_request_id
+                $cancellationRequest = CapstoneRequest::where('capstone_request_id', $capstone_request_id)
+                    ->where('type', CapstoneRequest::TYPE_CANCEL_REQ)
+                    ->where('status', CapstoneRequest::STATUS_PENDING_FACULTY)
+                    ->with('capstone')
+                    ->firstOrFail();
+
+                $action = $validated['action'];
+                $feedback = $validated['feedback'] ?? '';
+
+                if ($action === 'APPROVE') {
+                    // Duyệt hủy
+                    $cancellationRequest->update([
+                        'status' => CapstoneRequest::STATUS_APPROVED,
+                        'lecturer_feedback' => $feedback ?: $cancellationRequest->lecturer_feedback
+                    ]);
+                    
+                    $cancellationRequest->capstone->update(['status' => Capstone::STATUS_CANCEL]);
+
+                    $msg = "Văn phòng khoa đã chính thức phê duyệt yêu cầu hủy. Học phần đồ án của bạn đã bị hủy trên hệ thống.";
+                    $resMsg = "Phê duyệt hủy đồ án thành công.";
+                } else {
+                    // Từ chối hủy
+                    $cancellationRequest->update([
+                        'status' => CapstoneRequest::STATUS_REJECTED,
+                        'lecturer_feedback' => $feedback
+                    ]);
+
+                    $msg = "Văn phòng khoa đã từ chối yêu cầu hủy đồ án của bạn." . ($feedback ? " Lý do: {$feedback}" : "");
+                    $resMsg = "Đã từ chối yêu cầu hủy đồ án.";
+                }
+
+                // Gửi thông báo cho sinh viên
+                $this->sendNotification(
+                    $cancellationRequest->capstone->student_id,
+                    1, // Role Student
+                    $msg
+                );
+
+                return response()->json([
+                    'success' => true,
+                    'message' => $resMsg,
+                    'data' => [
+                        'capstone_request_id' => $cancellationRequest->capstone_request_id,
+                        'status' => $cancellationRequest->status
+                    ]
+                ]);
+            });
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy yêu cầu hủy này hoặc nó đã được xử lý.'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi xử lý yêu cầu hủy: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

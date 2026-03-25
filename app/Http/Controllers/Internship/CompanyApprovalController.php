@@ -175,6 +175,79 @@ class CompanyApprovalController extends InternshipBaseController
     }
 
     /**
+     * UC 39.2: VPK Lấy danh sách tất cả internships với pending cancel requests (có phân trang)
+     * (Hiển thị button duyệt hủy chỉ khi có PENDING_FACULTY cancel request)
+     */
+    public function getVPKInternshipsList(\Illuminate\Http\Request $request)
+    {
+        $page = $request->get('page', 1);
+        $perPage = $request->get('per_page', 10);
+
+        // Lấy tất cả internships với phân trang
+        $paginatedInternships = Internship::with([
+            'student.studentClass',
+            'lecturer',
+            'company',
+            'semester',
+            // Chỉ load cancel request có status=PENDING_FACULTY
+            'requests' => function ($q) {
+                $q->where('type', InternshipRequest::TYPE_CANCEL_REQ)
+                  ->where('status', InternshipRequest::STATUS_PENDING_FACULTY);
+            }
+        ])->paginate($perPage, ['*'], 'page', $page);
+
+        // Transform response để hiển thị
+        $data = $paginatedInternships->items();
+        $transformedData = collect($data)->map(function ($internship) {
+            $pendingCancelRequest = $internship->requests->first();
+            
+            return [
+                'internship_id' => $internship->internship_id,
+                'student_id' => $internship->student_id,
+                'student_name' => $internship->student?->full_name ?? $internship->student?->name ?? 'N/A',
+                'student_code' => $internship->student?->usercode ?? 'N/A',
+                'class_name' => $internship->student?->studentClass?->class_name ?? '---',
+                'lecturer_id' => $internship->lecturer_id,
+                'lecturer_name' => $internship->lecturer?->full_name ?? $internship->lecturer?->name ?? '---',
+                'company_id' => $internship->company_id,
+                'company_name' => $internship->company?->name ?? '---',
+                'company_grade' => $internship->company_grade ?? null,
+                'semester_id' => $internship->semester_id,
+                'status' => $internship->status,
+                'position' => $internship->position,
+                // Flag để hiển thị button
+                'has_pending_cancel_request' => $pendingCancelRequest !== null,
+                // Chi tiết pending cancel request (nếu có)
+                'pending_cancel_request' => $pendingCancelRequest ? [
+                    'internship_request_id' => $pendingCancelRequest->internship_request_id,
+                    'type' => $pendingCancelRequest->type,
+                    'status' => $pendingCancelRequest->status,
+                    'student_message' => $pendingCancelRequest->student_message,
+                    'feedback' => $pendingCancelRequest->feedback,
+                    'created_at' => $pendingCancelRequest->created_at,
+                    'updated_at' => $pendingCancelRequest->updated_at,
+                ] : null,
+                'created_at' => $internship->created_at,
+                'updated_at' => $internship->updated_at,
+            ];
+        })->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => $transformedData,
+            'pagination' => [
+                'current_page' => $paginatedInternships->currentPage(),
+                'total' => $paginatedInternships->total(),
+                'per_page' => $paginatedInternships->perPage(),
+                'last_page' => $paginatedInternships->lastPage(),
+                'from' => $paginatedInternships->firstItem(),
+                'to' => $paginatedInternships->lastItem(),
+            ]
+        ]);
+    }
+
+
+    /**
      * UC 42 - Bước 5a: Cập nhật thông tin doanh nghiệp đề xuất
      */
     public function updateProposedCompany(\Illuminate\Http\Request $request, $proposedCompanyId)

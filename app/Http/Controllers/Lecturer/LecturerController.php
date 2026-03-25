@@ -5,22 +5,79 @@ namespace App\Http\Controllers\Lecturer;
 use App\Http\Controllers\Controller;
 use App\Models\Lecturer;
 use App\Models\LecturerRequest;
+use App\Models\LecturerLeave;
 use App\Http\Resources\LecturerResource;
 use App\Http\Requests\Lecturer\SearchLecturerRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Resources\Lecturer\LecturerSearchResource;
 use Illuminate\Database\Eloquent\Builder;
+use Carbon\Carbon;
 
 class LecturerController extends Controller
 {
+    /**
+     * UC 48 - Bước 1: Lấy danh sách giảng viên (kèm thông tin nghỉ phép)
+     * GET /faculty/lecturers
+     */
+    public function index()
+    {
+        // Load tất cả lecturer với leaves và requests để frontend có thể detect trạng thái
+        $lecturers = Lecturer::with([
+            'leaves' => function ($q) {
+                // Chỉ load leave records có status LEAVE_ACTIVE hoặc APPROVED_PENDING
+                $q->whereIn('status', ['LEAVE_ACTIVE', 'APPROVED_PENDING']);
+            },
+            'requests' => function ($q) {
+                // Chỉ load pending LEAVE_REQ
+                $q->where('type', 'LEAVE_REQ')
+                  ->where('status', 'PENDING');
+            },
+            'expertises' // Load chuyên môn
+        ])->get();
+
+        // Transform data để frontend dễ sử dụng
+        $transformedLecturers = $lecturers->map(function ($lecturer) {
+            return [
+                'lecturer_id' => $lecturer->lecturer_id,
+                'usercode' => $lecturer->usercode,
+                'full_name' => $lecturer->full_name,
+                'email' => $lecturer->email,
+                'phone_number' => $lecturer->phone_number,
+                'degree' => $lecturer->degree,
+                'department' => $lecturer->department,
+                'is_active' => $lecturer->is_active,
+                'gender' => $lecturer->gender,
+                'dob' => $lecturer->dob,
+                'expertises' => $lecturer->expertises->map(fn($e) => [
+                    'expertise_id' => $e->expertise_id,
+                    'name' => $e->name
+                ])->toArray(),
+                // Thêm thông tin leaves để frontend detect "NGHỈ PHÉP"
+                'leaves' => $lecturer->leaves->map(fn($leave) => [
+                    'leave_id' => $leave->leave_id,
+                    'status' => $leave->status,
+                    'start_date' => $leave->start_date,
+                    'end_date' => $leave->end_date
+                ])->toArray(),
+                'requests' => $lecturer->requests->toArray(),
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $transformedLecturers,
+            'message' => 'Lấy danh sách giảng viên thành công'
+        ]);
+    }
+
     /**
      * UC 47: Tìm kiếm giảng viên
      */
     public function search(SearchLecturerRequest $request)
     {
         // Sử dụng eager loading và count để tối ưu tốc độ < 2s (NFR-1)
-        $query = Lecturer::with(['expertises'])
+        $query = Lecturer::with(['expertises', 'leaves'])
             ->withCount(['internships', 'capstones']);
 
         // 1. Tìm theo tên giảng viên (Bước 2)
@@ -96,7 +153,19 @@ class LecturerController extends Controller
                 'faculty_feedback' => 'Đã phê duyệt nghỉ phép',
             ]);
 
-            // 2. Cập nhật trạng thái giảng viên (Bước 6: is_active = 0)
+            // 2a. Tạo bản ghi lecturer_leaves (Mới thêm theo yêu cầu)
+            $leaveStart = $leaveReq->start_date ?? $request->input('start_date') ?? now();
+            $leaveEnd = $leaveReq->end_date ?? $request->input('end_date') ?? now()->addDays(7);
+            
+            LecturerLeave::create([
+                'request_id' => $leaveReq->request_id,
+                'start_date' => $leaveStart,
+                'end_date' => $leaveEnd,
+                'status' => 'APPROVED_PENDING',
+                'delegate_completed' => 0,
+            ]);
+
+            // 2b. Cập nhật trạng thái giảng viên (Bước 6: is_active = 0)
             $lecturer = Lecturer::findOrFail($id);
             $lecturer->update(['is_active' => 0]);
 

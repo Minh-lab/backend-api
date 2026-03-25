@@ -117,7 +117,10 @@ Route::middleware(['auth:sanctum', 'role:lecturer'])->prefix('internships')->gro
 
 //UC 39
 Route::middleware(['auth:sanctum', 'role:faculty_staff'])->prefix('faculty_staff/internships')->group(function () {
-    // UC 39.2
+    // UC 39.2: VPK lấy danh sách internships với pending cancel requests
+    Route::get('/manage', [CompanyApprovalController::class, 'getVPKInternshipsList']);
+    
+    // UC 39.2: VPK duyệt hủy thực tập
     Route::get('/pending-cancels', [CancellationController::class, 'getPendingCancelVPK']);
     Route::post('/review-cancel/{id}', [CancellationController::class, 'reviewCancelVPK']);
 });

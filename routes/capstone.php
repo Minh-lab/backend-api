@@ -103,7 +103,9 @@ Route::middleware(['auth:sanctum', 'role:faculty_staff'])->prefix('faculty_staff
  * UC 28: Faculty Staff quản lý danh sách đồ án + phân công GVHD
  */
 Route::middleware(['auth:sanctum', 'role:faculty_staff'])->prefix('faculty_staff/capstones')->group(function () {
-    Route::get('/', [SupervisorAssignmentController::class, 'getCapstonesList']);
+    // RECOMMENDED: Sử dụng endpoint mới cho VPK (với xử lý cancel request riêng)
+    Route::get('/', [SupervisorAssignmentController::class, 'getVPKCapstonesList']);
+    
     Route::get('/lecturers-slots', [SupervisorAssignmentController::class, 'getLecturerAssignmentList']);
     Route::get('/advisors', [SupervisorAssignmentController::class, 'getAdvisorsWithSlots']);
     Route::get('/{id}', [SupervisorAssignmentController::class, 'getCapstoneDetail']);
@@ -134,9 +136,19 @@ Route::middleware(['auth:sanctum', 'role:lecturer'])->prefix('capstones')->group
 });
 
 /**
- * UC 31.2: Faculty Staff duyệt hủy cuối cùng
+ * UC 31.2: Faculty Staff duyệt hủy cuối cùng (API cũ - DEPRECATED)
  */
 Route::middleware(['auth:sanctum', 'role:faculty_staff'])->prefix('faculty_staff/capstones')->group(function () {
     Route::get('/cancellations', [CancellationController::class, 'getPendingCancellationsVPK']);
     Route::post('/cancellations/{id}/confirm', [CancellationController::class, 'reviewCancellationVPK']);
+});
+
+/**
+ * UC 31.2: Faculty Staff duyệt hủy cuối cùng (API mới - RECOMMENDED)
+ * Path: /faculty_staff/capstones/cancel-requests
+ * Riêng biệt, không share logic với lecturer
+ */
+Route::middleware(['auth:sanctum', 'role:faculty_staff'])->prefix('faculty_staff/capstones')->group(function () {
+    Route::get('/cancel-requests/pending', [CancellationController::class, 'getVPKPendingCancelRequests']);
+    Route::post('/cancel-requests/{capstone_request_id}/process', [CancellationController::class, 'processVPKCancellationRequest']);
 });

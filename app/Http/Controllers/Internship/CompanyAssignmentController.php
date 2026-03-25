@@ -40,10 +40,10 @@ class CompanyAssignmentController extends InternshipBaseController
     {
         return DB::transaction(function () use ($request) {
             // BR-3: Kiểm tra thời hạn đăng ký của sinh viên đã kết thúc chưa
-            $milestone = Milestone::where('type', Milestone::TYPE_INTERNSHIP)->upcoming()->first();
-            if ($milestone) {
-                return response()->json(['message' => 'Thời hạn tự đăng ký chưa kết thúc (BR-3).'], 400);
-            }
+            // $milestone = Milestone::where('type', Milestone::TYPE_INTERNSHIP)->upcoming()->first();
+            // if ($milestone) {
+            //     return response()->json(['message' => 'Thời hạn tự đăng ký chưa kết thúc (BR-3).'], 400);
+            // }
 
             $company = Company::findOrFail($request->company_id);
             $internshipIds = $request->internship_ids;
