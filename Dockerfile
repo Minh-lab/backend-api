@@ -35,9 +35,6 @@ RUN cp -n .env.example .env || true
 # Cài dependencies (--no-scripts để tránh lỗi khi chưa có DB)
 RUN composer install --no-interaction --no-plugins --no-scripts --prefer-dist
 
-# Tạo APP_KEY nếu chưa có
-RUN php artisan key:generate --ansi || true
-
 # Phân quyền storage và cache
 RUN mkdir -p /var/www/storage/logs \
              /var/www/storage/framework/cache \
